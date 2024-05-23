@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+
+[project]
+name = "esportsbench"
+version = "0.0.1"
+description = "esports datasets for benchmarking rating systems"
+authors = [
+    {name="Clayton Thorrez", email="claytonthorrez@gmail.com"},
+]
+dependencies = [
+    "requests",
+    "requests-cache",
+    "python-dotenv",
+    "numpy",
+    "scipy",
+    "polars",
+    "pandas", # :/
+    # "riix", # TODO uncomment this when riix is released
+]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.format]
+quote-style = "single"
