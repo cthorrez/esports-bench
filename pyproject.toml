@@ -14,7 +14,7 @@ dependencies = [
     "python-dotenv",
     "numpy",
     "scipy",
-    "polars",
+    "polars==0.20.4",
     "pandas", # :/
     # "riix", # TODO uncomment this when riix is released
 ]
