@@ -133,4 +133,4 @@ class CounterStrikeDataPipeline(LPDBDataPipeline):
         )
 
         print(f'valid row count: {df.shape[0]}')
-        df.write_csv(self.final_data_path)
+        df.write_csv(self.full_data_path)

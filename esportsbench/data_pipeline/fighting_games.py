@@ -83,4 +83,4 @@ class FightingGamesDataPipeline(LPDBDataPipeline):
         for game_series in self.games:
             game_df = df.filter(pl.col('game').is_in(GAME_CONFIG[game_series]))
             print(f'{game_series} final row count: {game_df.shape[0]}')
-            game_df.write_csv(self.final_data_dir / f'{game_series}.csv')
+            game_df.write_csv(self.full_data_dir / f'{game_series}.csv')

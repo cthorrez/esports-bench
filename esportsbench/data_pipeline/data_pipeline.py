@@ -69,12 +69,12 @@ class DataPipeline(ABC):
         data_dir = Path(__file__).resolve().parents[2] / 'data'
         self.raw_data_dir = data_dir / 'raw_data'
         self.invalid_data_dir = data_dir / 'invalid_data' / self.game
-        self.final_data_dir = data_dir / 'final_data'
-        self.final_data_path = self.final_data_dir / f'{self.game}.csv'
+        self.full_data_dir = data_dir / 'full_data'
+        self.full_data_path = self.full_data_dir / f'{self.game}.csv'
         os.makedirs(data_dir, exist_ok=True)
         os.makedirs(self.raw_data_dir, exist_ok=True)
         os.makedirs(self.invalid_data_dir, exist_ok=True)
-        os.makedirs(self.final_data_dir, exist_ok=True)
+        os.makedirs(self.full_data_dir, exist_ok=True)
 
         cache_dir = data_dir / 'requests_cache'
         os.makedirs(cache_dir, exist_ok=True)

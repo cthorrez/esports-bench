@@ -99,4 +99,4 @@ class LeaugeOfLegendsDataPipeline(DataPipeline):
         )
 
         print(f'final row count: {df.shape[0]}')
-        df.write_csv(self.final_data_path)
+        df.write_csv(self.full_data_path)
