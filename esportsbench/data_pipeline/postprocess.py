@@ -10,7 +10,7 @@ pl.Config.set_tbl_rows(100)
 
 def main(train_end_date, test_end_date, min_rows_year):
     data_dir = pathlib.Path(__file__).resolve().parents[2] / 'data'
-    input_file_paths = data_dir.glob('full_data/*')
+    input_file_paths = sorted(data_dir.glob('full_data/*'))
     for input_file_path in input_file_paths:
         game = input_file_path.name
         print(f'summary for {game}:')

@@ -15,7 +15,9 @@ dependencies = [
     "numpy",
     "scipy",
     "polars==0.20.4",
-    "pandas", # :/
+    "pandas", # :/,
+    "pyyaml",
+    "dacite",
     # "riix", # TODO uncomment this when riix is released
 ]
 

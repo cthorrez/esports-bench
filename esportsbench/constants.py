@@ -20,6 +20,7 @@ GAME_NAME_MAP = {
     'tek': 'tekken',
     'kof': 'king_of_fighters',
     'gg': 'guilty_gear',
+    'fifa': 'fifa',
 }
 
 GAME_NAMES = list(GAME_NAME_MAP.values())

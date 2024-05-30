@@ -19,6 +19,7 @@ from esportsbench.data_pipeline.halo import HaloDataPipeline
 from esportsbench.data_pipeline.call_of_duty import CallOfDutyDataPipeline
 from esportsbench.data_pipeline.tetris import TetrisDataPipeline
 from esportsbench.data_pipeline.fighting_games import FightingGamesDataPipeline
+from esportsbench.data_pipeline.fifa import FIFADataPipeline
 from esportsbench.utils import delimited_list
 from esportsbench.arg_parsers import get_games_argparser
 
@@ -42,6 +43,7 @@ GAME_CLASS_MAP = {
     'tek': partial(FightingGamesDataPipeline, games=['tekken']),
     'kof': partial(FightingGamesDataPipeline, games=['king_of_fighters']),
     'gg': partial(FightingGamesDataPipeline, games=['guilty_gear']),
+    'fifa' : FIFADataPipeline,
 }
 
 
