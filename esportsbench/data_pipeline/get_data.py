@@ -20,6 +20,7 @@ from esportsbench.data_pipeline.call_of_duty import CallOfDutyDataPipeline
 from esportsbench.data_pipeline.tetris import TetrisDataPipeline
 from esportsbench.data_pipeline.fighting_games import FightingGamesDataPipeline
 from esportsbench.data_pipeline.fifa import FIFADataPipeline
+from esportsbench.data_pipeline.postprocess import postprocess
 from esportsbench.utils import delimited_list
 from esportsbench.arg_parsers import get_games_argparser
 
@@ -59,12 +60,19 @@ def run_pipeline(games, action, num_processes=1, **kwargs):
 
     if action in {'ingest', 'all'}:
         list(map_fn(methodcaller('ingest_data'), data_pipelines))
-    if action in {'process', 'all'}:
-        list(map_fn(methodcaller('process_data'), data_pipelines))
 
     if num_processes > 1:
         pool.close()
         pool.join()
+
+    if action in {'process', 'all'}:
+        list(map(methodcaller('process_data'), data_pipelines))
+
+    postprocess(
+        args['train_end_date'],
+        args['test_end_date'],
+        args['min_rows_year']
+    )
 
 
 if __name__ == '__main__':
@@ -76,11 +84,13 @@ if __name__ == '__main__':
         choices=['ingest', 'process', 'all'],
         default='all',
     )
-    parser.add_argument('--rows_per_request', type=int, required=False)
-    parser.add_argument('--timeout', type=float, required=False)
+    parser.add_argument('-t', '--timeout', type=float, required=False)
     parser.add_argument('-mr', '--max_rows', type=int, required=False)
     parser.add_argument('-kr', '--keys_to_refresh', type=delimited_list, required=False, default=[])
     parser.add_argument('-np', '--num_processes', type=int, required=False, default=1)
+    parser.add_argument('--train_end_date', type=str, default='2023-03-31', help='inclusive end date for test set')
+    parser.add_argument('--test_end_date', type=str, default='2024-03-31', help='inclusive end date for test set')
+    parser.add_argument('--min_rows_year', type=int, default=100, help='minmum number of rows in a year to begin including data')
     args = vars(parser.parse_args())
     args = {key: val for key, val in args.items() if val is not None}
     run_pipeline(**args)

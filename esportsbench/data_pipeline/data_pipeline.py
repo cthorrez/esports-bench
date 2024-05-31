@@ -58,6 +58,7 @@ class DataPipeline(ABC):
         timeout,
         keys_to_refresh=None,
         max_rows=float('inf'),
+        **kwargs,
     ):
         self.rows_per_request = rows_per_request
         self.waiter = Waiter(timeout=timeout)

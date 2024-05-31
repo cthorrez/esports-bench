@@ -74,7 +74,7 @@ class CounterStrikeDataPipeline(LPDBDataPipeline):
 
         # filter out matches with placeholder teams or without any results recorded
         print('filtering tbd')
-        placeholder_expr = (pl.col('team_1') == 'tbd') | (pl.col('team_2') == 'tbd')
+        placeholder_expr = (pl.col('team_1').str.to_lowercase() == 'tbd') | (pl.col('team_2').str.to_lowercase() == 'tbd')
         df = self.filter_invalid(df, placeholder_expr, 'placeholder')
 
         missing_team_expr = is_null_or_empty('team_1') | is_null_or_empty('team_2')
