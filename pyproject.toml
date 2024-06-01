@@ -18,6 +18,7 @@ dependencies = [
     "pandas", # :/,
     "pyyaml",
     "dacite",
+    "matplotlib"
     # "riix", # TODO uncomment this when riix is released
 ]
 

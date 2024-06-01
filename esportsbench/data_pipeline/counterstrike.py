@@ -84,8 +84,10 @@ class CounterStrikeDataPipeline(LPDBDataPipeline):
         df = self.filter_invalid(df, played_self_expr, 'played_self')
 
         missing_results_expr = (
-            (pl.col('team_1_score') == -1) & (pl.col('team_2_score') == -1) & (pl.col('winner') == '')
-        ) | ((pl.col('team_1_score') == 0) & (pl.col('team_2_score') == 0) & (pl.col('winner') == ''))
+            ((pl.col('team_1_score') == -1) & (pl.col('team_2_score') == -1) & (pl.col('winner') == '-1'))
+            | ((pl.col('team_1_score') == -1) & (pl.col('team_2_score') == -1) & (pl.col('winner') == ''))
+            | ((pl.col('team_1_score') == 0) & (pl.col('team_2_score') == 0) & (pl.col('winner') == ''))
+        )
         df = self.filter_invalid(df, missing_results_expr, 'missing_results')
 
         # logic for outcome column
