@@ -20,6 +20,15 @@ def postprocess(train_end_date, test_end_date, min_rows_year):
         last_date = df.select('date').max().item()[:10]
         print(f'date range: {first_date} to {last_date}')
 
+        comp_1_error = df.filter(pl.col('competitor_1').str.contains('<div class="error">')).count()
+        comp_2_error = df.filter(pl.col('competitor_2').str.contains('<div class="error">')).count()
+
+        print(f'comp_1 error count: {comp_1_error}')
+        print(f'comp_2 error count: {comp_2_error}')
+
+
+
+
         df = df.with_columns(pl.col('date').str.to_datetime().alias('date'))
         df = df.with_columns(pl.col('date').dt.year().alias('year'))
         year_counts = df.group_by('year').count().sort('year')
@@ -40,20 +49,7 @@ def postprocess(train_end_date, test_end_date, min_rows_year):
         )
         print(f'filtered row count: {len(df)}')
 
-        print(f'mean outcome before swap: {df.select("outcome").mean().item()}')
-
-        df = df.with_columns(
-            (pl.int_range(0, pl.count(), dtype=pl.UInt32) % 2 == 1).alias("swap")
-        ).with_columns([
-            pl.when(pl.col("swap")).then(pl.col("competitor_2")).otherwise(pl.col("competitor_1")).alias("competitor_1"),
-            pl.when(pl.col("swap")).then(pl.col("competitor_1")).otherwise(pl.col("competitor_2")).alias("competitor_2"),
-            pl.when(pl.col("swap")).then(pl.col("competitor_2_score")).otherwise(pl.col("competitor_1_score")).alias("competitor_1_score"),
-            pl.when(pl.col("swap")).then(pl.col("competitor_1_score")).otherwise(pl.col("competitor_2_score")).alias("competitor_2_score"),
-            pl.when(pl.col("swap")).then(1 - pl.col("outcome")).otherwise(pl.col("outcome")).alias("outcome")
-        ]).drop("swap")
-
-        print(f'mean outcome after swap: {df.select("outcome").mean().item()}')
-
+        print(f'mean outcome: {df.select("outcome").mean().item()}')
 
         train_df = df.filter(
             (pl.col('date') <= train_end_date)

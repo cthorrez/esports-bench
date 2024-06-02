@@ -12,7 +12,7 @@ class CallOfDutyDataPipeline(LPDBDataPipeline):
         'call_of_duty.jsonl': {
             'wiki': 'callofduty',
             'query': 'date, opponent1, opponent2, opponent1score, opponent2score, winner, game, status, mode, resulttype, walkover, matchid, pagename',
-            'conditions': '[[mode::team]] AND [[game::!Call of Duty: Mobile]] AND [[finished::1]] AND [[walkover::!1]] AND [[walkover::!2]] AND [[opponent1::!Bye]] AND [[opponent2::!Bye]] AND [[opponent1::!TBD]] AND [[opponent2::!TBD]]',
+            'conditions': '[[mode::team]] AND [[game::!mobile]] AND [[game::!codm]] AND [[game::!Call of Duty: Mobile]] AND [[finished::1]] AND [[walkover::!1]] AND [[walkover::!2]] AND [[opponent1::!Bye]] AND [[opponent2::!Bye]] AND [[opponent1::!TBD]] AND [[opponent2::!TBD]]',
             'order': 'date ASC, matchid ASC',
         }
     }
