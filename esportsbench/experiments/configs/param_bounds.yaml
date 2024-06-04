@@ -1,0 +1,89 @@
+# hard bounds you can't sweep past
+
+
+elo:
+  k:
+    lower_bound: 1.0e-6
+
+glicko:
+  initial_rating_dev:
+    lower_bound: 1.0e-6
+  c:
+    lower_bound: 1.0e-6
+
+glicko2:
+  initial_rd:
+    lower_bound: 1.0e-6
+  initial_sigma:
+    lower_bound: 1.0e-6
+  tau:
+    lower_bound: 1.0e-6
+
+trueskill:
+  initial_sigma:
+    lower_bound: 1.0e-6
+  beta:
+    lower_bound: 0.4166 
+  tau:
+    lower_bound: 1.0e-6
+
+vskf_bt:
+  v_0:
+    lower_bound: 1.0e-6
+  beta:
+    lower_bound: 1.0e-6
+    upper_bound: 1.0
+  s:
+    lower_bound: 1.0e-6
+  epsilon:
+    lower_bound: 1.0e-6
+
+vskf_tm:
+  v_0:
+    lower_bound: 1.0e-6
+  beta:
+    lower_bound: 1.0e-6
+    upper_bound: 1.0
+  s:
+    lower_bound: 1.0e-6
+  epsilon:
+    lower_bound: 1.0e-6
+
+wl_bt:
+  initial_sigma:
+    lower_bound: 1.0e-6
+  beta:
+    lower_bound: 1.0e-6
+  kappa:
+    lower_bound: 1.0e-6
+
+wl_tm:
+  initial_sigma:
+    lower_bound: 1.0e-6
+  beta:
+    lower_bound: 1.0e-6 
+  kappa:
+    lower_bound: 1.0e-6
+
+melo:
+  dimension:
+    param_type: list
+  eta_r:
+    lower_bound: 1.0e-6
+  eta_c:
+    lower_bound: 1.0e-6
+
+velo:
+  initial_sigma:
+    lower_bound: 1.0e-6
+  sigma_reduction_factor:
+    lower_bound: 1.0e-6
+    upper_bound: 1.0
+  sigma_lower_bound:
+    lower_bound: 1.0e-6
+  b:
+    lower_bound: 1.0e-6
+
+genelo:
+  sigma:
+    lower_bound: 1.0e-6

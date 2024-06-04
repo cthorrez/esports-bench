@@ -70,7 +70,7 @@ class FightingGamesDataPipeline(LPDBDataPipeline):
                 'outcome',
                 'game',
                 pl.col('objectname').str.replace('\n', '').alias('match_id'),
-                pl.col('pagename').alias('page'),
+                (pl.lit(self.page_prefix) + pl.col('pagename')).alias('page'),
             )
             .unique()
             .sort('date', 'match_id')

@@ -185,6 +185,8 @@ class LPDBDataPipeline(DataPipeline):
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'accept-encoding': 'gzip',
             }
+        wiki = next(iter(self.request_params_groups.values()))['wiki']
+        self.page_prefix = f'https://liquipedia.net/{wiki}/'
 
     def get_request_iterator(self, request_params):
         def request_iterator():

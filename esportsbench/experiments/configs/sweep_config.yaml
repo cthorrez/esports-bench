@@ -1,8 +1,8 @@
-experiment_id: experiment_1
+experiment_id: experiment_1_10D_100
 param_configs:
   elo:
     k:
-      min_value: 1.0
+      min_value: 3.2
       max_value: 320.0
 
   glicko:
@@ -37,7 +37,7 @@ param_configs:
 
   vskf_bt:
     v_0:
-      min_value: 0.01 
+      min_value: 1.0e-6
       max_value: 10.0
     beta:
       min_value: 0.9
@@ -51,7 +51,7 @@ param_configs:
 
   vskf_tm:
     v_0:
-      min_value: 0.01 
+      min_value: 1.0e-6
       max_value: 10.0
     beta:
       min_value: 0.9
@@ -90,8 +90,8 @@ param_configs:
       param_type: list
       values: [1, 5, 10]
     eta_r:
-      min_value: 3.2
-      max_value: 320.0
+      min_value: 1.6
+      max_value: 160.0
     eta_c:
       min_value: 0.01
       max_value: 1.0

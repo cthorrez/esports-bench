@@ -92,7 +92,7 @@ class LeaugeOfLegendsDataPipeline(DataPipeline):
                 pl.col('Team2Score').cast(pl.Float64).alias('competitor_2_score'),
                 'outcome',
                 pl.col('MatchId').alias('match_id'),
-                pl.col('OverviewPage').alias('page'),
+                (pl.lit('https://lol.fandom.com/wiki/') + pl.col('OverviewPage').str.replace_all('\s', '_')).alias('page'),
             )
             .unique()
             .sort('date', 'match_id')

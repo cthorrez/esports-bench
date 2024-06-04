@@ -201,7 +201,7 @@ class Starcraft1DataPipeline(LPDBDataPipeline):
                 pl.col('player_2_score').alias('competitor_2_score'),
                 'outcome',
                 pl.col('match2id').alias('match_id'),
-                pl.col('pagename').alias('page'),
+                (pl.lit(self.page_prefix) + pl.col('pagename')).alias('page'),
             )
             .unique()
             .unique()

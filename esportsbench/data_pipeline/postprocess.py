@@ -11,22 +11,23 @@ pl.Config.set_tbl_rows(100)
 def postprocess(train_end_date, test_end_date, min_rows_year):
     data_dir = pathlib.Path(__file__).resolve().parents[2] / 'data'
     input_file_paths = sorted(data_dir.glob('full_data/*'))
+    print('')
     for input_file_path in input_file_paths:
         game = input_file_path.name
         print(f'summary for {game}:')
-        df = pl.read_csv(input_file_path)
+        df = pl.read_csv(input_file_path).drop('competitor_1_score', 'competitor_2_score')
+        if 'game' in df.columns:
+            df = df.drop('game')
         print(f'num total matches: {len(df)}')
         first_date = df.select('date').min().item()[:10]
         last_date = df.select('date').max().item()[:10]
         print(f'date range: {first_date} to {last_date}')
 
-        comp_1_error = df.filter(pl.col('competitor_1').str.contains('<div class="error">')).count()
-        comp_2_error = df.filter(pl.col('competitor_2').str.contains('<div class="error">')).count()
+        comp_1_error = df.select('competitor_1').filter(pl.col('competitor_1').str.contains('<div class="error">')).count().item()
+        comp_2_error = df.select('competitor_2').filter(pl.col('competitor_2').str.contains('<div class="error">')).count().item()
 
         print(f'comp_1 error count: {comp_1_error}')
         print(f'comp_2 error count: {comp_2_error}')
-
-
 
 
         df = df.with_columns(pl.col('date').str.to_datetime().alias('date'))
@@ -47,8 +48,16 @@ def postprocess(train_end_date, test_end_date, min_rows_year):
             (pl.col('year') >= first_valid_year)
             & (pl.col('date') <= test_end_date)
         )
+        print(df.columns)
         print(f'filtered row count: {len(df)}')
+        unique_competitors = pl.concat([
+            df["competitor_1"],
+            df["competitor_2"]
+        ]).unique()
+        print(f'num unique competitors: {unique_competitors.count()}')
 
+        draw_rate = df.select(pl.col('outcome')== 0.5).mean().item()
+        print(f'Draw rate: {draw_rate}')
         print(f'mean outcome: {df.select("outcome").mean().item()}')
 
         train_df = df.filter(
@@ -64,7 +73,7 @@ def postprocess(train_end_date, test_end_date, min_rows_year):
 
 
         output_file_path = data_dir / 'final_data' / input_file_path.name
-        df.write_csv(output_file_path)
+        df.drop('year').write_csv(output_file_path)
 
         print('======================================================')
 

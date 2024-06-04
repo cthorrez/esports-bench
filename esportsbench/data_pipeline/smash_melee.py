@@ -49,7 +49,7 @@ class SmashMeleeDataPipeline(LPDBDataPipeline):
                 pl.col('opponent2score').cast(pl.Float64).alias('competitor_2_score'),
                 'outcome',
                 pl.col('matchid').alias('match_id'),
-                pl.col('pagename').alias('page'),
+                (pl.lit(self.page_prefix) + pl.col('pagename')).alias('page'),
             )
             .unique()
             .sort('date', 'match_id')

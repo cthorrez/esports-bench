@@ -66,6 +66,12 @@ class Starcraft2DataPipeline(DataPipeline):
             ).alias('player_2'),
             pl.col('sca').cast(pl.Float64).alias('player_1_score'),
             pl.col('scb').cast(pl.Float64).alias('player_2_score'),
+            pl.col('eventobj').struct.field('fullname').str.replace_all('\s', '-').str.replace_all('\/', '').alias('event_name'),
+            pl.col('eventobj').struct.field('id').cast(pl.Utf8).alias('event_id'),
+
+        )
+        df = df.with_columns(
+            (pl.lit('http://aligulac.com/results/events/') + pl.col('event_id') + pl.lit('-') + pl.col('event_name')).alias('page')
         )
         df = df.with_columns(
             pl.when(pl.col('player_1_score') > pl.col('player_2_score'))
@@ -92,6 +98,7 @@ class Starcraft2DataPipeline(DataPipeline):
                 pl.col('player_2_score').alias('competitor_2_score'),
                 'outcome',
                 pl.col('id').alias('match_id'),
+                'page',
             )
             .unique()
             .sort('date', 'match_id')

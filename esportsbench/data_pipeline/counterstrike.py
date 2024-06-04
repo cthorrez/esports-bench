@@ -127,7 +127,7 @@ class CounterStrikeDataPipeline(LPDBDataPipeline):
                 team_2_score_expr,
                 'outcome',
                 pl.col('match2id').alias('match_id'),
-                pl.col('pagename').alias('page'),
+                (pl.lit(self.page_prefix) + pl.col('pagename')).alias('page'),
             )
             .unique()
             .sort('date', 'match_id')
