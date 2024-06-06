@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 
 def main():
-    experiment_id = "experiment_1"
+    experiment_id = "broad_sweep"
     results = defaultdict(dict)
     for game in os.listdir(f'../experiments/sweep_results/{experiment_id}'):
         for rs_file in os.listdir(f'../experiments/sweep_results/{experiment_id}/{game}'):

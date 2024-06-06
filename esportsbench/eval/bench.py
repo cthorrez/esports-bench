@@ -133,12 +133,25 @@ def print_results(data_dict):
     print('=' * len(header_line))
 
     for game, rating_systems in data_dict.items():
-        for rating_system, metrics in rating_systems.items():
+        acc_latex_line = f'{game} & accuracy'
+        ll_latex_line =f'{game} & log loss'
+        rating_system_names = ['elo', 'glicko', 'glicko2', 'trueskill', 'wl_bt', 'wl_tm', 'melo', 'genelo', 'vskf_bt', 'vskf_tm', 'velo']
+        for rating_system_name in rating_system_names:
+            metrics = rating_systems[rating_system_name]
             accuracy = f"{metrics.get('accuracy', 'N/A'):.4f}".rjust(10)
+            accuracy_without_draws = f"{metrics.get('accuracy_without_draws', 'N/A'):.4f}".rjust(10)
             log_loss = f"{metrics.get('log_loss', 'N/A'):.4f}".rjust(10)
             brier_score = f"{metrics.get('brier_score', 'N/A'):.4f}".rjust(12)
             duration = f"{metrics.get('duration', 'N/A'):.4f}".rjust(10)
-            print(f'{game:<18}{rating_system:<30}{accuracy}{log_loss}{brier_score}{duration}')
+            # print(f'{game:<18}{rating_system_name:<30}{accuracy}{log_loss}{brier_score}{duration}')
+            print(f'{game:<18}{rating_system_name:<30}{accuracy_without_draws}{log_loss}{brier_score}{duration}')
+
+            acc_latex_line += f' & {accuracy_without_draws}'
+            ll_latex_line += f' & {log_loss}'
+        # print(acc_latex_line.replace("     ", " ") + ' \\\\')
+        # print(ll_latex_line.replace("     ", " ") + ' \\\\')
+
+
 
 
 def main(

@@ -12,7 +12,8 @@ class ParamSweepConfig:
 
 @dataclass
 class ExperimentSweepConfig:
-    experiment_id: str
+    rating_period: Optional[str]
+    num_samples: Optional[int]
     # first level key is rating_system
     # second level key is param_name
     param_configs: Dict[str, Dict[str, ParamSweepConfig]]

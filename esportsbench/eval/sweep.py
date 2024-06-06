@@ -49,15 +49,15 @@ def construct_param_configurations(
 def sweep(
     games,
     config,
+    granularity,
     drop_draws=False,
     rating_period='7D',
     train_end_date='2023-03-31',
     test_end_date='2024-03-31',
     num_samples=100,
     num_processes=8,
-    seed=42,
 ):
-    results_dir = f'sweep_results/{config.experiment_id}'
+    results_dir = f'sweep_results/{granularity}_sweep_{rating_period}_{num_samples}'
     os.makedirs(results_dir, exist_ok=True)
     for dataset_name in games:
         dataset, test_mask = load_dataset(
