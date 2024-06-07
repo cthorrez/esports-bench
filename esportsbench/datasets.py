@@ -4,7 +4,7 @@ import pandas as pd
 from riix.utils.data_utils import MatchupDataset
 from esportsbench.constants import GAME_NAME_MAP
 
-DATA_DIR = pathlib.Path(__file__).resolve().parents[1] / 'data' / 'final_data'
+BASE_DATA_DIR = pathlib.Path(__file__).resolve().parents[1] / 'data' 
 
 
 def load_dataset(
@@ -14,11 +14,12 @@ def load_dataset(
     max_rows=None,
     train_end_date='2023-03-31',
     test_end_date='2024-03-31',
+    data_dir = 'final_data',
 ):
     # map short name to full name if short name is provided
     if game in GAME_NAME_MAP:
         game = GAME_NAME_MAP[game]
-    df = pd.read_csv(DATA_DIR / f'{game}.csv')
+    df = pd.read_csv(BASE_DATA_DIR / data_dir / f'{game}.csv')
     if drop_draws:
         df = df[df['outcome'] != 0.5].reset_index()
     if max_rows:

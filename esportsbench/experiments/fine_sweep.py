@@ -58,6 +58,7 @@ def construct_config(config_dir, param_bounds):
 
 def main(
     games,
+    data_dir,
     config_dir,
     drop_draws=False,
     rating_period='7D',
@@ -77,6 +78,7 @@ def main(
         sweep(
             [game],
             config,
+            data_dir=data_dir,
             granularity='fine',
             drop_draws=drop_draws,
             rating_period=rating_period,
@@ -87,9 +89,9 @@ def main(
         )
 
 
-
 if __name__ == '__main__':
     parser = get_games_argparser()
+    parser.add_argument('-d', '--data_dir', type=str, default='hf_data')
     parser.add_argument('-c', '--config_dir', type=str, default='sweep_results/broad_sweep_7D_1000', required=False)
     parser.add_argument('-rp', '--rating_period', type=str, required=False, default='7D')
     parser.add_argument('--train_end_date', type=str, default='2023-03-31', help='inclusive end date for test set')

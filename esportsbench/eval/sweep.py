@@ -49,11 +49,12 @@ def construct_param_configurations(
 def sweep(
     games,
     config,
+    data_dir,
     granularity,
-    drop_draws=False,
+    train_end_date,
+    test_end_date,
     rating_period='7D',
-    train_end_date='2023-03-31',
-    test_end_date='2024-03-31',
+    drop_draws=False,
     num_samples=100,
     num_processes=8,
 ):
@@ -65,7 +66,8 @@ def sweep(
             rating_period=rating_period,
             drop_draws=drop_draws,
             train_end_date=train_end_date,
-            test_end_date=test_end_date
+            test_end_date=test_end_date,
+            data_dir=data_dir,
         )
 
 
