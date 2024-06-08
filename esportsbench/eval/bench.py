@@ -210,5 +210,5 @@ if __name__ == '__main__':
         train_end_date=args.train_end_date,
         test_end_date=args.test_end_date,
         config_dir=args.config_dir,
-        data_dir=data_dir,
+        data_dir=args.data_dir,
     )
