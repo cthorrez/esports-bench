@@ -13,6 +13,50 @@ To collect the data yourself, you will need to obtain Aliculac and Liquipedia LP
 
 Add your key(s) to `.dotenv-template` and rename it to `.env` so that the data pipelines can access them.
 
+
+### Reproduce Experiments
+To exactly reproduce the results of Table 2 of the paper, follow these steps exactly:
+
+Clone the repo and enter:
+```bash
+git clone https://github.com/cthorrez/esports-bench
+cd esports-bench
+```
+
+Checkout the v0.0.1 tag
+```bash
+git checkout tags/v0.0.1
+```
+
+Create conda env
+```bash
+conda create -n esportsbench python=3.11
+```
+
+Install requirements
+```bash
+pip install riix==0.0.3
+pip install -e .
+```
+
+Run the broad hyperparameter sweep
+```bash
+python experiments/broad_sweep.py --config_file experiments/configs/broad_sweep_config.yaml
+```
+
+Run the fine hyperparameter sweep
+```bash
+python experiments/fine_sweep.py --config_dir experiments/sweep_results/broad_sweep_7D_1000
+```
+
+Run the evaluation script using the best parameters
+```bash
+python eval/bench.py --config_dir experiments/sweep_results/fine_sweep_7D_1000/
+```
+
+Note each sweep will take many hours, it takes 5 hours on my desktop and 17 on my laptop.
+You can use the `-np <num_cores>` flag to increase the number of processes utilized to be the number of cores you have 
+
 ### Data Licences
 The data collected by these pipelines is collected from different sources with their own licenses. If you reproduce the the data collection and experiments understand the retrieved data and results falls under those licenses.
 
