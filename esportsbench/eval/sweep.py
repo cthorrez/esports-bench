@@ -1,18 +1,14 @@
 """module for sweeping hyperparameters"""
 import os
-import math
-import yaml
+import pathlib
 import json
 import warnings
 from typing import Dict
 import numpy as np
-import pandas as pd
-from dacite import from_dict
 from riix.eval import grid_search
 from esportsbench.datasets import load_dataset
 from esportsbench.eval.bench import RATING_SYSTEM_MAP
-from esportsbench.eval.sweep_config import ExperimentSweepConfig, ParamSweepConfig
-from esportsbench.arg_parsers import get_games_argparser
+from esportsbench.eval.sweep_config import ParamSweepConfig
 
 # Suppress overflow warnings since many of the combinations swept over are expected to be numerically unstable
 warnings.filterwarnings('ignore', category=RuntimeWarning)
@@ -58,7 +54,7 @@ def sweep(
     num_samples=100,
     num_processes=8,
 ):
-    results_dir = f'sweep_results/{granularity}_sweep_{rating_period}_{num_samples}'
+    results_dir = pathlib.Path(__file__).parents[1] / 'experiments' / 'sweep_results' / f'{granularity}_sweep_{rating_period}_{num_samples}'
     os.makedirs(results_dir, exist_ok=True)
     for dataset_name in games:
         dataset, test_mask = load_dataset(
