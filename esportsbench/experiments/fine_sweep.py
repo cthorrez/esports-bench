@@ -1,16 +1,10 @@
 import os
-import math
 import yaml
 import json
+import pathlib
 import warnings
-from typing import Dict
-import numpy as np
-import pandas as pd
 from dacite import from_dict
-from riix.eval import grid_search
-from esportsbench.datasets import load_dataset
-from esportsbench.eval.bench import RATING_SYSTEM_MAP
-from esportsbench.eval.sweep_config import ExperimentSweepConfig, ParamSweepConfig
+from esportsbench.eval.sweep_config import ExperimentSweepConfig
 from esportsbench.arg_parsers import get_games_argparser
 from esportsbench.eval.sweep import sweep
 
@@ -67,7 +61,8 @@ def main(
     num_samples=100,
     num_processes=8,
 ):
-    param_bounds = yaml.full_load(open('configs/param_bounds.yaml'))
+    param_file_path = pathlib.Path(__file__).parents[1] / 'configs' / 'param_bounds.yaml'
+    param_bounds = yaml.full_load(open(param_file_path))
     config_dict = construct_config(config_dir, param_bounds)
     print(param_bounds)
     print(config_dict)
