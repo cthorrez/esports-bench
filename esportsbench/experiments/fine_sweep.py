@@ -61,7 +61,7 @@ def main(
     num_samples=100,
     num_processes=8,
 ):
-    param_file_path = pathlib.Path(__file__).parents[1] / 'configs' / 'param_bounds.yaml'
+    param_file_path = pathlib.Path(__file__).parent / 'configs' / 'param_bounds.yaml'
     param_bounds = yaml.full_load(open(param_file_path))
     config_dict = construct_config(config_dir, param_bounds)
     print(param_bounds)
