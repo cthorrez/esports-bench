@@ -82,8 +82,9 @@ def run_benchmark(
     games,
     rating_systems,
     rating_period,
-    train_end_date='2023-03-31',
-    test_end_date='2024-03-31',
+    train_end_date,
+    test_end_date,
+    data_dir,
     drop_draws=False,
     max_rows=None,
     config_dir=None,
@@ -99,7 +100,8 @@ def run_benchmark(
             drop_draws=drop_draws,
             max_rows=max_rows,
             train_end_date=train_end_date,
-            test_end_date=test_end_date
+            test_end_date=test_end_date,
+            data_dir=data_dir,
         )
 
         for rating_system_name in rating_systems:
@@ -160,6 +162,7 @@ def main(
     rating_period,
     train_end_date,
     test_end_date,
+    data_dir,
     drop_draws=False,
     max_rows=None,
     config_dir=None,
@@ -172,6 +175,7 @@ def main(
         rating_period,
         train_end_date=train_end_date,
         test_end_date=test_end_date,
+        data_dir=data_dir,
         drop_draws=drop_draws,
         max_rows=max_rows,
         config_dir=config_dir,
@@ -194,6 +198,7 @@ if __name__ == '__main__':
     parser.add_argument('-rp', '--rating_period', type=str, required=False, default='7D')
     parser.add_argument('--train_end_date', type=str, default='2023-03-31', help='inclusive end date for test set')
     parser.add_argument('--test_end_date', type=str, default='2024-03-31', help='inclusive end date for test set')
+    parser.add_argument('-d', '--data_dir', type=str, default='hf_data')
     parser.add_argument('-cd', '--config_dir', type=str, required=False)
     args = parser.parse_args()
     main(
@@ -205,4 +210,5 @@ if __name__ == '__main__':
         train_end_date=args.train_end_date,
         test_end_date=args.test_end_date,
         config_dir=args.config_dir,
+        data_dir=data_dir,
     )
