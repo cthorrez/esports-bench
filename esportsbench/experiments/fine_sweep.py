@@ -64,8 +64,6 @@ def main(
     param_file_path = pathlib.Path(__file__).parent / 'configs' / 'param_bounds.yaml'
     param_bounds = yaml.full_load(open(param_file_path))
     config_dict = construct_config(config_dir, param_bounds)
-    print(param_bounds)
-    print(config_dict)
 
     for game in games:
         config = from_dict(data_class=ExperimentSweepConfig, data={'param_configs' : config_dict[game]})
@@ -91,7 +89,7 @@ if __name__ == '__main__':
     parser.add_argument('-rp', '--rating_period', type=str, required=False, default='7D')
     parser.add_argument('--train_end_date', type=str, default='2023-03-31', help='inclusive end date for test set')
     parser.add_argument('--test_end_date', type=str, default='2024-03-31', help='inclusive end date for test set')
-    parser.add_argument('-ns', '--num_samples', type=int, default=100, required=False)
+    parser.add_argument('-ns', '--num_samples', type=int, default=1000, required=False)
     parser.add_argument('-np', '--num_processes', type=int, default=12, required=False)
     parser.add_argument('-dd', '--drop_draws', action='store_true')
     args = parser.parse_args()

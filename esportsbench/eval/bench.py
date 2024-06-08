@@ -86,7 +86,7 @@ def run_benchmark(
     test_end_date='2024-03-31',
     drop_draws=False,
     max_rows=None,
-    params_dir=None,
+    config_dir=None,
 ):
     """run a benchmark where all rating systems use default values"""
     results = defaultdict(dict)
@@ -106,8 +106,8 @@ def run_benchmark(
             rating_system_class = RATING_SYSTEM_MAP[rating_system_name]
             name = rating_system_name
             params = {}
-            if params_dir:
-                params_path = f'{params_dir}/{game_short_name}/{rating_system_name}.json'
+            if config_dir:
+                params_path = f'{config_dir}/{game_short_name}/{rating_system_name}.json'
                 if os.path.exists(params_path):
                     params = json.load(open(params_path))['best_params']
                     print(f'using params from {params_path}')
@@ -162,7 +162,7 @@ def main(
     test_end_date,
     drop_draws=False,
     max_rows=None,
-    params_dir=None,
+    config_dir=None,
 ):
     """process arguments and launch the benchmark"""
 
@@ -174,7 +174,7 @@ def main(
         test_end_date=test_end_date,
         drop_draws=drop_draws,
         max_rows=max_rows,
-        params_dir=params_dir,
+        config_dir=config_dir,
     )
     results = add_mean_metrics(results)
     print_results(results)
@@ -194,7 +194,7 @@ if __name__ == '__main__':
     parser.add_argument('-rp', '--rating_period', type=str, required=False, default='7D')
     parser.add_argument('--train_end_date', type=str, default='2023-03-31', help='inclusive end date for test set')
     parser.add_argument('--test_end_date', type=str, default='2024-03-31', help='inclusive end date for test set')
-    parser.add_argument('-pd', '--params_dir', type=str, required=False)
+    parser.add_argument('-cd', '--config_dir', type=str, required=False)
     args = parser.parse_args()
     main(
         games=args.games,
@@ -204,5 +204,5 @@ if __name__ == '__main__':
         rating_period=args.rating_period,
         train_end_date=args.train_end_date,
         test_end_date=args.test_end_date,
-        params_dir=args.params_dir,
+        config_dir=args.config_dir,
     )
