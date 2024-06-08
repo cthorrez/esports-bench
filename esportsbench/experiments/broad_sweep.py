@@ -1,16 +1,7 @@
-import os
-import math
 import yaml
-import json
 import warnings
-from typing import Dict
-import numpy as np
-import pandas as pd
 from dacite import from_dict
-from riix.eval import grid_search
-from esportsbench.datasets import load_dataset
-from esportsbench.eval.bench import RATING_SYSTEM_MAP
-from esportsbench.eval.sweep_config import ExperimentSweepConfig, ParamSweepConfig
+from esportsbench.eval.sweep_config import ExperimentSweepConfig
 from esportsbench.arg_parsers import get_games_argparser
 from esportsbench.eval.sweep import sweep
 
