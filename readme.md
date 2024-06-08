@@ -33,10 +33,21 @@ Create conda env
 conda create -n esportsbench python=3.11
 ```
 
+Activate env
+```bash
+conda activate esportsbench
+```
+
 Install requirements
 ```bash
 pip install riix==0.0.3
 pip install -e .
+```
+
+Download the data from HuggingFace
+```bash
+cd esportsbench
+python data_pipeline/get_data_from_hf.py
 ```
 
 Run the broad hyperparameter sweep
