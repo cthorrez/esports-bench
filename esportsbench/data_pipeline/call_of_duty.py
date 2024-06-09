@@ -37,6 +37,9 @@ class CallOfDutyDataPipeline(LPDBDataPipeline):
         did_not_play_expr = (pl.col('team_1_score') == 0) & (pl.col('team_2_score') == 0) & is_null_or_empty('winner')
         df = self.filter_invalid(df, did_not_play_expr, 'did_not_play')
 
+        missing_game_expr = is_null_or_empty(pl.col('game'))
+        df = self.filter_invalid(df, missing_game_expr, 'missing_game')
+
         df = df.with_columns(
             pl.when(pl.col('team_1_score') > pl.col('team_2_score'))
             .then(1.0)
