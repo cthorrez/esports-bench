@@ -44,8 +44,8 @@ def compare_snapshots(prev, cur):
     comparison = prev.join(cur, on='game_name', how='inner', suffix="_2")
     summary = comparison.select([
         pl.col('game_name'),
-        (pl.col('num_matches_2').cast(pl.Int32) - pl.col('num_matches').cast(pl.Int32)).alias('diff_num_matches'),
-        (pl.col('num_competitors_2').cast(pl.Int32) - pl.col('num_competitors').cast(pl.Int32)).alias('diff_num_competitors'),
+        (pl.col('num_matches_2').cast(pl.Int64) - pl.col('num_matches').cast(pl.Int64)).alias('diff_num_matches'),
+        (pl.col('num_competitors_2').cast(pl.Int64) - pl.col('num_competitors').cast(pl.Int64)).alias('diff_num_competitors'),
         pl.when(pl.col('first_date') != pl.col('first_date_2')).then(
            pl.format("{} -> {}", pl.col('first_date').str.slice(0,10), pl.col('first_date_2').str.slice(0,10)) 
         ).otherwise(pl.lit('unchanged')).alias('first_date'),
@@ -54,6 +54,18 @@ def compare_snapshots(prev, cur):
         ).otherwise(pl.lit('unchanged')).alias('last_date'),
         (pl.col('mean_outcome_2') - pl.col('mean_outcome')).alias('diff_mean_outcome'),
     ])
+    # Create a new row
+    total = pl.DataFrame({
+        'game_name': ['total'],
+        'diff_num_matches': [summary['diff_num_matches'].sum()],
+        'diff_num_competitors': [summary['diff_num_competitors'].sum()],
+        'first_date': [None],
+        'last_date': [None],
+        'diff_mean_outcome': [None],
+    })
+
+    # Append the new row to the summary
+    summary = summary.vstack(total)
     print(summary)
 
 def make_and_compare():
