@@ -68,11 +68,12 @@ def run_pipeline(games, action, num_processes=1, **kwargs):
     if action in {'process', 'all'}:
         list(map(methodcaller('process_data'), data_pipelines))
 
-    postprocess(
-        args['train_end_date'],
-        args['test_end_date'],
-        args['min_rows_year']
-    )
+    if kwargs['postprocess']:
+        postprocess(
+            args['train_end_date'],
+            args['test_end_date'],
+            args['min_rows_year']
+        )
 
 
 if __name__ == '__main__':
@@ -91,6 +92,7 @@ if __name__ == '__main__':
     parser.add_argument('--train_end_date', type=str, default='2023-03-31', help='inclusive end date for test set')
     parser.add_argument('--test_end_date', type=str, default='2024-03-31', help='inclusive end date for test set')
     parser.add_argument('--min_rows_year', type=int, default=100, help='minmum number of rows in a year to begin including data')
+    parser.add_argument('--postprocess', '-p', action='store_true')
     args = vars(parser.parse_args())
     args = {key: val for key, val in args.items() if val is not None}
     run_pipeline(**args)
