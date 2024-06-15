@@ -19,7 +19,8 @@ class Dota2DataPipeline(LPDBDataPipeline):
     }
     placeholder_team_names = {'bye', 'tbd'}
 
-    def __init__(self, rows_per_request=1000, timeout=60.0, **kwargs):
+    def __init__(self, rows_per_request=1000, timeout=60.0, to_lowercase=True, **kwargs):
+        self.to_lowercase = to_lowercase
         super().__init__(rows_per_request=rows_per_request, timeout=timeout, **kwargs)
 
     def process_data(self):
@@ -92,22 +93,28 @@ class Dota2DataPipeline(LPDBDataPipeline):
         # use name if it is not null, use template otherwise
         df = df.with_columns(
             pl.when(~is_null_or_empty('team_1_name'))
-            .then(pl.col('team_1_name').str.to_lowercase())
+            .then(pl.col('team_1_name'))
             .when(~is_null_or_empty('team_1_template_name'))
-            .then(pl.col('team_1_template_name').str.to_lowercase())
+            .then(pl.col('team_1_template_name'))
             .when(~is_null_or_empty('team_1_template'))
-            .then(pl.col('team_1_template').str.to_lowercase())
+            .then(pl.col('team_1_template'))
             .otherwise(None)
             .alias('team_1'),
             pl.when(~is_null_or_empty('team_2_name'))
-            .then(pl.col('team_2_name').str.to_lowercase())
+            .then(pl.col('team_2_name'))
             .when(~is_null_or_empty('team_2_template_name'))
-            .then(pl.col('team_2_template_name').str.to_lowercase())
+            .then(pl.col('team_2_template_name'))
             .when(~is_null_or_empty('team_2_template'))
-            .then(pl.col('team_2_template').str.to_lowercase())
+            .then(pl.col('team_2_template'))
             .otherwise(None)
             .alias('team_2'),
         )
+
+        if self.to_lowercase:
+            df = df.with_columns(
+                pl.col('team_1').str.to_lowercase().alias('team_1'),
+                pl.col('team_2').str.to_lowercase().alias('team_2'),
+            )
 
         placeholder_expr = pl.col('team_1').str.to_lowercase().is_in(self.placeholder_team_names) | pl.col(
             'team_2'

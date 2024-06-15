@@ -119,8 +119,6 @@ def run_benchmark(
 
             print(f'running {name}')
             rating_system = rating_system_class(competitors=dataset.competitors, **params)
-            train_mask = np.logical_not(test_mask)
-            # metrics = evaluate(rating_system, dataset, metrics_mask=train_mask)
             metrics = evaluate(rating_system, dataset, metrics_mask=test_mask)
             results[game_name][name] = metrics
     return results
