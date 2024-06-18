@@ -7,38 +7,72 @@ class CallOfDutyDataPipeline(LPDBDataPipeline):
     """class for ingesting and processing  cod data from LPDB"""
 
     game = 'call_of_duty'
-    version = 'v1'
+    version = 'v3'
     request_params_groups = {
         'call_of_duty.jsonl': {
             'wiki': 'callofduty',
-            'query': 'date, opponent1, opponent2, opponent1score, opponent2score, winner, game, status, mode, resulttype, walkover, matchid, pagename',
-            'conditions': '[[mode::team]] AND [[game::!mobile]] AND [[game::!codm]] AND [[game::!Call of Duty: Mobile]] AND [[finished::1]] AND [[walkover::!1]] AND [[walkover::!2]] AND [[opponent1::!Bye]] AND [[opponent2::!Bye]] AND [[opponent1::!TBD]] AND [[opponent2::!TBD]]',
-            'order': 'date ASC, matchid ASC',
+            'query': 'date, match2opponents, winner, game, mode, resulttype, walkover, match2id, pagename',
+            'conditions': '[[mode::team]] AND [[game::!mobile]] AND [[game::!codm]] AND [[game::!Call of Duty: Mobile]] AND [[finished::1]] AND [[walkover::!1]] AND [[walkover::!2]] AND [[section::!Showmatch]] AND [[liquipediatiertype::!Showmatch]]',
+            'order': 'date ASC, match2id ASC',
         }
     }
 
-    def __init__(self, rows_per_request=1000, timeout=60.0, **kwargs):
+    def __init__(self, rows_per_request=1000, timeout=60.0, to_lowercase=False, **kwargs):
+        self.to_lowercase = to_lowercase
         super().__init__(rows_per_request=rows_per_request, timeout=timeout, **kwargs)
 
     def process_data(self):
         df = pl.scan_ndjson(self.raw_data_dir / 'call_of_duty.jsonl', infer_schema_length=100).collect()
         print(f'initial row count: {df.shape[0]}')
 
-        df = self.filter_invalid(df, invalid_date_expr, 'invalid_date')
+        df = self.filter_invalid(df, invalid_date_expr, 'invalid_date', drop_cols=['match2opponents'])
 
-        df = df.with_columns(
-            pl.col('opponent1score').cast(pl.Float64).alias('team_1_score'),
-            pl.col('opponent2score').cast(pl.Float64).alias('team_2_score'),
-        )
-
-        missing_team_expr = is_null_or_empty('opponent1') | is_null_or_empty('opponent2')
-        df = self.filter_invalid(df, missing_team_expr, 'missing_team')
-
-        did_not_play_expr = (pl.col('team_1_score') == 0) & (pl.col('team_2_score') == 0) & is_null_or_empty('winner')
-        df = self.filter_invalid(df, did_not_play_expr, 'did_not_play')
+        # filter out matches without exactly 2 teams
+        not_two_teams_expr = pl.col('match2opponents').list.len() != 2
+        df = self.filter_invalid(df, not_two_teams_expr, 'not_two_teams', drop_cols=['match2opponents'])
 
         missing_game_expr = is_null_or_empty(pl.col('game'))
         df = self.filter_invalid(df, missing_game_expr, 'missing_game')
+
+        # extract team names and scores
+        df = df.with_columns(
+            pl.col('match2opponents').list.get(0).alias('team_1_struct'),
+            pl.col('match2opponents').list.get(1).alias('team_2_struct'),
+        ).drop('match2opponents')
+        df = df.with_columns(
+            pl.col('team_1_struct').struct.field('name').alias('team_1_name'),
+            pl.col('team_1_struct').struct.field('template').alias('team_1_template'),
+            pl.col('team_1_struct').struct.field('teamtemplate').struct.field('name').alias('team_1_template_name'),
+            pl.col('team_1_struct').struct.field('teamtemplate').struct.field('page').alias('team_1_template_page'),
+            pl.col('team_1_struct').struct.field('score').cast(pl.Float64).alias('team_1_score'),
+            pl.col('team_2_struct').struct.field('name').alias('team_2_name'),
+            pl.col('team_2_struct').struct.field('template').alias('team_2_template'),
+            pl.col('team_2_struct').struct.field('teamtemplate').struct.field('name').alias('team_2_template_name'),
+            pl.col('team_2_struct').struct.field('teamtemplate').struct.field('page').alias('team_2_template_page'),
+            pl.col('team_2_struct').struct.field('score').cast(pl.Float64).alias('team_2_score'),
+        ).drop('team_1_struct', 'team_2_struct')
+
+        # use name if it is not null, use template otherwise
+        df = df.with_columns(
+            pl.when(~is_null_or_empty('team_1_template_name'))
+            .then(pl.col('team_1_template_name'))
+            .when(is_null_or_empty('team_1_name') & ~is_null_or_empty('team_1_template'))
+            .then(pl.col('team_1_template'))
+            .otherwise(pl.col('team_1_name'))
+            .alias('team_1'),
+            pl.when(~is_null_or_empty('team_2_template_name'))
+            .then(pl.col('team_2_template_name'))
+            .when(is_null_or_empty('team_2_name') & ~is_null_or_empty('team_2_template'))
+            .then(pl.col('team_2_template'))
+            .otherwise(pl.col('team_2_name'))
+            .alias('team_2'),
+        )
+
+        if self.to_lowercase:
+            df = df.with_columns(
+                pl.col('team_1').str.to_lowercase().alias('team_1'),
+                pl.col('team_2').str.to_lowercase().alias('team_2'),
+            )
 
         df = df.with_columns(
             pl.when(pl.col('team_1_score') > pl.col('team_2_score'))
@@ -70,18 +104,18 @@ class CallOfDutyDataPipeline(LPDBDataPipeline):
         null_outcome_expr = pl.col('outcome').is_null()
         df = self.filter_invalid(df, null_outcome_expr, 'null_outcome')
 
-        played_self_expr = pl.col('opponent1') == pl.col('opponent2')
+        played_self_expr = pl.col('team_1') == pl.col('team_2')
         df = self.filter_invalid(df, played_self_expr, 'played_self')
 
         df = (
             df.select(
                 'date',
-                pl.col('opponent1').alias('competitor_1'),
-                pl.col('opponent2').alias('competitor_2'),
+                pl.col('team_1').alias('competitor_1'),
+                pl.col('team_2').alias('competitor_2'),
                 pl.col('team_1_score').alias('competitor_1_score'),
                 pl.col('team_2_score').alias('competitor_2_score'),
                 'outcome',
-                pl.col('matchid').alias('match_id'),
+                pl.col('match2id').alias('match_id'),
                 (pl.lit(self.page_prefix) + pl.col('pagename')).alias('page'),
             )
             .unique()

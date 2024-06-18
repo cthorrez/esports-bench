@@ -29,8 +29,7 @@ class CounterStrikeDataPipeline(LPDBDataPipeline):
             low_memory=True,
             ignore_errors=True,
         )
-        # print(f'initial row count: {df.select(pl.len()).collect(streaming=True).item()}')
-
+        
         print('filtering invalid dates')
         df = self.filter_invalid(df, invalid_date_expr, 'invalid_date', drop_cols=['match2opponents'])
 
