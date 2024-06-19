@@ -17,7 +17,6 @@ class Dota2DataPipeline(LPDBDataPipeline):
             'order': 'date ASC, match2id ASC',
         }
     }
-    placeholder_team_names = {'bye', 'tbd'}
 
     def __init__(self, rows_per_request=1000, timeout=60.0, to_lowercase=True, **kwargs):
         self.to_lowercase = to_lowercase
@@ -116,10 +115,11 @@ class Dota2DataPipeline(LPDBDataPipeline):
                 pl.col('team_2').str.to_lowercase().alias('team_2'),
             )
 
-        placeholder_expr = pl.col('team_1').str.to_lowercase().is_in(self.placeholder_team_names) | pl.col(
-            'team_2'
-        ).str.to_lowercase().is_in(self.placeholder_team_names)
-        df = self.filter_invalid(df, placeholder_expr, 'placeholder')
+        invalid_competitor_expr = (
+            pl.col('team_1').str.to_lowercase().is_in(self.invalid_competitor_names) 
+            | pl.col('team_2').str.to_lowercase().is_in(self.invalid_competitor_names)
+        )
+        df = self.filter_invalid(df, invalid_competitor_expr, 'invalid_competitor')
 
         played_self_expr = pl.col('team_1') == pl.col('team_2')
         df = self.filter_invalid(df, played_self_expr, 'played_self')

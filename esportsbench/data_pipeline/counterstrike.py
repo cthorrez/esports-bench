@@ -29,7 +29,7 @@ class CounterStrikeDataPipeline(LPDBDataPipeline):
             low_memory=True,
             ignore_errors=True,
         )
-        
+
         print('filtering invalid dates')
         df = self.filter_invalid(df, invalid_date_expr, 'invalid_date', drop_cols=['match2opponents'])
 
@@ -71,10 +71,11 @@ class CounterStrikeDataPipeline(LPDBDataPipeline):
             .alias('team_2'),
         )
 
-        # filter out matches with placeholder teams or without any results recorded
-        print('filtering tbd')
-        placeholder_expr = (pl.col('team_1').str.to_lowercase() == 'tbd') | (pl.col('team_2').str.to_lowercase() == 'tbd')
-        df = self.filter_invalid(df, placeholder_expr, 'placeholder')
+        invalid_competitor_expr = (
+            pl.col('team_1').str.to_lowercase().is_in(self.invalid_competitor_names) 
+            | pl.col('team_2').str.to_lowercase().is_in(self.invalid_competitor_names)
+        )
+        df = self.filter_invalid(df, invalid_competitor_expr, 'invalid_competitor')
 
         missing_team_expr = is_null_or_empty('team_1') | is_null_or_empty('team_2')
         df = self.filter_invalid(df, missing_team_expr, 'missing_team')

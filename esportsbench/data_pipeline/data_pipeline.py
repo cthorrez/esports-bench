@@ -166,6 +166,8 @@ class LPDBDataPipeline(DataPipeline):
     """class for ingesting and processing data from LPDB"""
 
     version = None
+    # these names appear when a match did not occur, has not occured yet, or data was never entered
+    invalid_competitor_names = {'bye', 'tba', 'tbd'}
 
     def __init__(self, rows_per_request=1000, timeout=60.0, **kwargs):
         super().__init__(rows_per_request=rows_per_request, timeout=timeout, **kwargs)

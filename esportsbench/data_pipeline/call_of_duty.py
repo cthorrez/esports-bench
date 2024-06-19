@@ -74,6 +74,12 @@ class CallOfDutyDataPipeline(LPDBDataPipeline):
                 pl.col('team_2').str.to_lowercase().alias('team_2'),
             )
 
+        invalid_competitor_expr = (
+            pl.col('team_1').str.to_lowercase().is_in(self.invalid_competitor_names) 
+            | pl.col('team_2').str.to_lowercase().is_in(self.invalid_competitor_names)
+        )
+        df = self.filter_invalid(df, invalid_competitor_expr, 'invalid_competitor')
+
         df = df.with_columns(
             pl.when(pl.col('team_1_score') > pl.col('team_2_score'))
             .then(1.0)
