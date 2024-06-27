@@ -4,7 +4,7 @@ import json
 import pathlib
 import warnings
 from dacite import from_dict
-from esportsbench.eval.sweep_config import ExperimentSweepConfig
+from esportsbench.eval.experiment_config import ExperimentSweepConfig
 from esportsbench.arg_parsers import get_games_argparser
 from esportsbench.eval.sweep import sweep
 

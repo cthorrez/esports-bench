@@ -1,6 +1,5 @@
 # hard bounds you can't sweep past
 
-
 elo:
   k:
     lower_bound: 1.0e-6

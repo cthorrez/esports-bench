@@ -8,28 +8,27 @@ import numpy as np
 from riix.eval import grid_search
 from esportsbench.datasets import load_dataset
 from esportsbench.eval.bench import RATING_SYSTEM_MAP
-from esportsbench.eval.sweep_config import ParamSweepConfig
+from esportsbench.eval.experiment_config import HyperparameterConfig
 
 # Suppress overflow warnings since many of the combinations swept over are expected to be numerically unstable
 warnings.filterwarnings('ignore', category=RuntimeWarning)
 
 
 def construct_param_configurations(
-    param_configs: Dict[str, ParamSweepConfig],
+    param_configs,
     num_samples: int,
     seed: int = 0,
 ):
     rng = np.random.default_rng(seed)
     param_values = {}
     for param_name, param_config in param_configs.items():
-        if param_config.param_type == 'range':
-            sampled_values = rng.uniform(low=param_config.min_value, high=param_config.max_value, size=num_samples)
-        elif param_config.param_type == 'list':
+        
+        if (hasattr(param_config, 'param_type')) and (getattr(param_config, 'param_type') == 'list'):
             idxs = rng.choice(len(param_config.values), size=num_samples)
             # doing list instead of array since this could be various dtypes
             sampled_values = [param_config.values[idx] for idx in idxs]
         else:
-            raise ValueError(f'param_type should be "range" or "list", got {param_config.param_type}')
+            sampled_values = rng.uniform(low=param_config.min_value, high=param_config.max_value, size=num_samples)
 
         param_values[param_name] = sampled_values
 
@@ -44,9 +43,9 @@ def construct_param_configurations(
 
 def sweep(
     games,
-    config,
     data_dir,
     granularity,
+    sweep_config,
     train_end_date,
     test_end_date,
     rating_period='7D',
@@ -72,11 +71,11 @@ def sweep(
         train_mask = np.ones(len(dataset), dtype=np.bool_)
         print(f'Sweeping on dataset with {len(dataset)} rows')
 
-        for rating_system_name in config.param_configs.keys():
+        for rating_system_name in sweep_config.keys():
             print(f'Sweeping {rating_system_name} on {dataset_name} over {num_samples} configurations')
             rating_system_class = RATING_SYSTEM_MAP[rating_system_name]
             param_configurations = construct_param_configurations(
-                param_configs=config.param_configs[rating_system_name], num_samples=num_samples
+                param_configs=sweep_config[rating_system_name], num_samples=num_samples
             )
             best_params, best_metrics = grid_search(
                 rating_system_class=rating_system_class,
