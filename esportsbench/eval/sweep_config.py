@@ -1,6 +1,15 @@
 from dataclasses import dataclass
-from typing import Literal, List, Optional, Dict
+from typing import Literal, List, Optional, Dict, Union
 
+
+@dataclass
+class ExperimentConfig:
+    train_end_date: str
+    test_end_date: str
+    num_samples: int
+    num_processes: int = 8
+    games: Union[Literal['all'], List[str]]
+    rating_systems: Union[Literal['all'], List[str]]
 
 @dataclass
 class ParamSweepConfig:
