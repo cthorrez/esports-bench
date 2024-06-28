@@ -17,6 +17,7 @@ def main(config: DictConfig):
 
     sweep(
         games=games,
+        rating_systems=config.rating_systems,
         data_dir=config.data_dir,
         granularity='broad',
         sweep_config=config.sweep_config,

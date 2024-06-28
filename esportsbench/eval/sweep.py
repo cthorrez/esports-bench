@@ -24,9 +24,9 @@ def construct_param_configurations(
     for param_name, param_config in param_configs.items():
         
         if (hasattr(param_config, 'param_type')) and (getattr(param_config, 'param_type') == 'list'):
-            idxs = rng.choice(len(param_config.values), size=num_samples)
+            idxs = rng.choice(len(param_config.options), size=num_samples)
             # doing list instead of array since this could be various dtypes
-            sampled_values = [param_config.values[idx] for idx in idxs]
+            sampled_values = [param_config.options[int(idx)] for idx in idxs]
         else:
             sampled_values = rng.uniform(low=param_config.min_value, high=param_config.max_value, size=num_samples)
 
@@ -48,6 +48,7 @@ def sweep(
     sweep_config,
     train_end_date,
     test_end_date,
+    rating_systems='all',
     rating_period='7D',
     drop_draws=False,
     num_samples=100,
@@ -70,6 +71,9 @@ def sweep(
         dataset = dataset[:train_rows]
         train_mask = np.ones(len(dataset), dtype=np.bool_)
         print(f'Sweeping on dataset with {len(dataset)} rows')
+
+        if rating_systems != 'all':
+            sweep_config = {key : val for key,val in sweep_config.items() if key in rating_systems}
 
         for rating_system_name in sweep_config.keys():
             print(f'Sweeping {rating_system_name} on {dataset_name} over {num_samples} configurations')

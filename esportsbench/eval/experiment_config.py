@@ -5,7 +5,7 @@ from typing import Literal, List, Optional, Dict, Union
 class HyperparameterConfig:
     min_value: Optional[float]
     max_value: Optional[float]
-    values: Optional[List]
+    options: Optional[List]
     param_type: Literal['range', 'list'] = 'range'
 
 
