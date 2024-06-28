@@ -14,13 +14,13 @@ glicko:
 
 glicko2:
   initial_rd:
-    min_value: 10.0
-    max_value: 1000.0
+    min_value: 20.0
+    max_value: 700.0
   initial_sigma:
-    min_value: 0.006
-    max_value: 0.6
+    min_value: 0.012
+    max_value: 0.3
   tau:
-    min_value: 0.12
+    min_value: 0.2
     max_value: 1.2
 
 trueskill:
@@ -87,7 +87,7 @@ wl_tm:
 melo:
   dimension:
     param_type: list
-    values: [1, 5, 10]
+    options: [1, 5, 10]
   eta_r:
     min_value: 1.6
     max_value: 160.0

@@ -72,14 +72,19 @@ def sweep(
         train_mask = np.ones(len(dataset), dtype=np.bool_)
         print(f'Sweeping on dataset with {len(dataset)} rows')
 
-        if rating_systems != 'all':
-            sweep_config = {key : val for key,val in sweep_config.items() if key in rating_systems}
+        if granularity == 'broad':
+            game_sweep_config = sweep_config
+        elif granularity == 'fine':
+            game_sweep_config = sweep_config[dataset_name]
 
-        for rating_system_name in sweep_config.keys():
+        if rating_systems != 'all':
+            game_sweep_config = {key : val for key,val in game_sweep_config.items() if key in rating_systems}
+
+        for rating_system_name in game_sweep_config.keys():
             print(f'Sweeping {rating_system_name} on {dataset_name} over {num_samples} configurations')
             rating_system_class = RATING_SYSTEM_MAP[rating_system_name]
             param_configurations = construct_param_configurations(
-                param_configs=sweep_config[rating_system_name], num_samples=num_samples
+                param_configs=game_sweep_config[rating_system_name], num_samples=num_samples
             )
             best_params, best_metrics = grid_search(
                 rating_system_class=rating_system_class,
