@@ -87,13 +87,12 @@ def run_benchmark(
     data_dir,
     drop_draws=False,
     max_rows=None,
-    config_dir=None,
+    hyperparameter_config='default',
 ):
     """run a benchmark where all rating systems use default values"""
     results = defaultdict(dict)
     for game_short_name in games:
         game_name = GAME_NAME_MAP[game_short_name]
-        print(f'evaluating {game_name}')
         dataset, test_mask = load_dataset(
             game=game_name,
             rating_period=rating_period,
@@ -105,19 +104,22 @@ def run_benchmark(
         )
 
         for rating_system_name in rating_systems:
+            print(f'\nEvaluating {rating_system_name} on {game_short_name}')
             rating_system_class = RATING_SYSTEM_MAP[rating_system_name]
             name = rating_system_name
             params = {}
-            if config_dir:
-                params_path = f'{config_dir}/{game_short_name}/{rating_system_name}.json'
+            if hyperparameter_config == 'default':
+                print('No hyperparameter config specified, using class default hyperparameters')
+            else:
+                params_path = f'{hyperparameter_config}/{game_short_name}/{rating_system_name}.json'
                 if os.path.exists(params_path):
                     params = json.load(open(params_path))['best_params']
-                    print(f'using params from {params_path}')
+                    print(f'Using hyperparameters from {params_path}')
                     print(params)
                 else:
-                    print(f"couldn't find param config for {rating_system_name} on {game_name}, using default params")
+                    print(f"couldn't find param config for {rating_system_name} on {game_name}, Exiting.")
+                    raise FileNotFoundError
 
-            print(f'running {name}')
             rating_system = rating_system_class(competitors=dataset.competitors, **params)
             metrics = evaluate(rating_system, dataset, metrics_mask=test_mask)
             results[game_name][name] = metrics
@@ -152,36 +154,6 @@ def print_results(data_dict):
         # print(ll_latex_line.replace("     ", " ") + ' \\\\')
 
 
-
-
-def main(
-    games,
-    rating_systems,
-    rating_period,
-    train_end_date,
-    test_end_date,
-    data_dir,
-    drop_draws=False,
-    max_rows=None,
-    config_dir=None,
-):
-    """process arguments and launch the benchmark"""
-
-    results = run_benchmark(
-        games,
-        rating_systems,
-        rating_period,
-        train_end_date=train_end_date,
-        test_end_date=test_end_date,
-        data_dir=data_dir,
-        drop_draws=drop_draws,
-        max_rows=max_rows,
-        config_dir=config_dir,
-    )
-    results = add_mean_metrics(results)
-    print_results(results)
-
-
 if __name__ == '__main__':
     all_rating_systems = list(RATING_SYSTEM_MAP.keys())
     parser = get_games_argparser()
@@ -191,22 +163,23 @@ if __name__ == '__main__':
         type=comma_separated(all_rating_systems),
         default=all_rating_systems,
     )
-    parser.add_argument('-mr', '--max_rows', type=int, required=False)
     parser.add_argument('-dd', '--drop_draws', action='store_true')
     parser.add_argument('-rp', '--rating_period', type=str, required=False, default='7D')
     parser.add_argument('--train_end_date', type=str, default='2023-03-31', help='inclusive end date for test set')
     parser.add_argument('--test_end_date', type=str, default='2024-03-31', help='inclusive end date for test set')
     parser.add_argument('-d', '--data_dir', type=str, default='hf_data')
-    parser.add_argument('-cd', '--config_dir', type=str, required=False)
+    parser.add_argument('-c', '--hyperparameter_config', type=str, required=False)
     args = parser.parse_args()
-    main(
-        games=args.games,
-        rating_systems=args.rating_systems,
-        drop_draws=args.drop_draws,
-        max_rows=args.max_rows,
-        rating_period=args.rating_period,
+
+    results = run_benchmark(
+        args.games,
+        args.rating_systems,
+        args.rating_period,
         train_end_date=args.train_end_date,
         test_end_date=args.test_end_date,
-        config_dir=args.config_dir,
         data_dir=args.data_dir,
+        drop_draws=args.drop_draws,
+        hyperparameter_config=args.hyperparameter_config
     )
+    results = add_mean_metrics(results)
+    print_results(results)

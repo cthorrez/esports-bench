@@ -7,10 +7,10 @@ import matplotlib.pyplot as plt
 def main():
     experiment_id = "broad_sweep"
     results = defaultdict(dict)
-    for game in os.listdir(f'../experiments/sweep_results/{experiment_id}'):
-        for rs_file in os.listdir(f'../experiments/sweep_results/{experiment_id}/{game}'):
+    for game in os.listdir(f'../experiments/conf/sweep_results/{experiment_id}'):
+        for rs_file in os.listdir(f'../experiments/conf/sweep_results/{experiment_id}/{game}'):
             rating_system = rs_file.removesuffix('.json')
-            results[game][rating_system] = json.load(open(f'../experiments/sweep_results/{experiment_id}/{game}/{rs_file}'))
+            results[game][rating_system] = json.load(open(f'../experiments/conf/sweep_results/{experiment_id}/{game}/{rs_file}'))
 
     # games = list(results.keys())
     # rating_systems = list(results[games[0]].keys())

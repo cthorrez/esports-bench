@@ -54,7 +54,7 @@ def sweep(
     num_samples=100,
     num_processes=8,
 ):
-    results_dir = pathlib.Path(__file__).parents[1] / 'experiments' / 'sweep_results' / f'{granularity}_sweep_{rating_period}_{num_samples}'
+    results_dir = pathlib.Path(__file__).parents[1] / 'experiments' / 'conf' / 'sweep_results' / f'{granularity}_sweep_{rating_period}_{num_samples}'
     os.makedirs(results_dir, exist_ok=True)
     for dataset_name in games:
         dataset, test_mask = load_dataset(
