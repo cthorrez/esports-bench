@@ -1,0 +1,14 @@
+{
+  "best_params": {
+    "initial_sigma": 4.880882754470852,
+    "sigma_reduction_factor": 0.13335883490148134,
+    "sigma_lower_bound": 0.33087307055275667,
+    "b": 0.14254592480152364
+  },
+  "best_metrics": {
+    "accuracy": 0.6425268965841779,
+    "log_loss": 0.6247299124609162,
+    "brier_score": 0.21295070629347682,
+    "duration": 1.7407021522521973
+  }
+}

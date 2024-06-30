@@ -6,8 +6,9 @@
   },
   "best_metrics": {
     "accuracy": 0.6403849642437724,
+    "accuracy_without_draws": 0.644445099368326,
     "log_loss": 0.63316925903745,
     "brier_score": 0.21400493308038232,
-    "duration": 2.3781912326812744
+    "duration": 2.723865032196045
   }
 }
