@@ -4,7 +4,7 @@ import json
 import pathlib
 import warnings
 import hydra
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig
 from esportsbench.eval.sweep import sweep
 from esportsbench.constants import GAME_SHORT_NAMES
 from esportsbench.eval.experiment_config import HyperparameterConfig

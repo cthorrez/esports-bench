@@ -1,7 +1,6 @@
-import yaml
 import warnings
 import hydra
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig
 from esportsbench.eval.sweep import sweep
 from esportsbench.constants import GAME_SHORT_NAMES
 

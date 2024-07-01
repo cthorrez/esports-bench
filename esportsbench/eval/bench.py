@@ -1,7 +1,5 @@
 """module for runninng benchmarks"""
 import os
-import functools
-import math
 import json
 from functools import partial
 from collections import defaultdict
@@ -73,10 +71,6 @@ def add_mean_metrics(data_dict):
     data_dict['mean'] = mean_metrics
 
     return data_dict
-
-
-
-
 
 def run_benchmark(
     games,
