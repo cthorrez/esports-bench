@@ -3,8 +3,6 @@ import os
 import json
 from functools import partial
 from collections import defaultdict
-import numpy as np
-import pandas as pd
 from riix.eval import evaluate
 from riix.models.elo import Elo
 from riix.models.glicko import Glicko
