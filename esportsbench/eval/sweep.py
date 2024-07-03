@@ -8,7 +8,6 @@ import numpy as np
 from riix.eval import grid_search
 from esportsbench.datasets import load_dataset
 from esportsbench.eval.bench import RATING_SYSTEM_MAP
-from esportsbench.eval.experiment_config import HyperparameterConfig
 
 # Suppress overflow warnings since many of the combinations swept over are expected to be numerically unstable
 warnings.filterwarnings('ignore', category=RuntimeWarning)
