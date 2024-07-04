@@ -2,6 +2,7 @@
 import os
 import json
 from functools import partial
+import multiprocessing
 from collections import defaultdict
 from riix.eval import evaluate
 from riix.models.elo import Elo
@@ -70,6 +71,13 @@ def add_mean_metrics(data_dict):
 
     return data_dict
 
+
+def eval_func(input_tuple):
+    game_name, rating_system_name, dataset, rating_system_class, params, test_mask = input_tuple
+    rating_system = rating_system_class(competitors=dataset.competitors, **params)
+    metrics = evaluate(rating_system, dataset, metrics_mask=test_mask)
+    return (game_name, rating_system_name, metrics)
+
 def run_benchmark(
     games,
     rating_systems,
@@ -83,38 +91,45 @@ def run_benchmark(
 ):
     """run a benchmark where all rating systems use default values"""
     results = defaultdict(dict)
-    for game_short_name in games:
-        game_name = GAME_NAME_MAP[game_short_name]
-        dataset, test_mask = load_dataset(
-            game=game_name,
-            rating_period=rating_period,
-            drop_draws=drop_draws,
-            max_rows=max_rows,
-            train_end_date=train_end_date,
-            test_end_date=test_end_date,
-            data_dir=data_dir,
-        )
 
-        for rating_system_name in rating_systems:
-            print(f'\nEvaluating {rating_system_name} on {game_short_name}')
-            rating_system_class = RATING_SYSTEM_MAP[rating_system_name]
-            name = rating_system_name
-            params = {}
-            if hyperparameter_config == 'default':
-                print('No hyperparameter config specified, using class default hyperparameters')
-            else:
-                params_path = f'{hyperparameter_config}/{game_short_name}/{rating_system_name}.json'
-                if os.path.exists(params_path):
-                    params = json.load(open(params_path))['best_params']
-                    print(f'Using hyperparameters from {params_path}')
-                    print(params)
+    def eval_iterator():
+        for game_short_name in games:
+            game_name = GAME_NAME_MAP[game_short_name]
+            dataset, test_mask = load_dataset(
+                game=game_name,
+                rating_period=rating_period,
+                drop_draws=drop_draws,
+                max_rows=max_rows,
+                train_end_date=train_end_date,
+                test_end_date=test_end_date,
+                data_dir=data_dir,
+            )
+
+            for rating_system_name in rating_systems:
+                print(f'\nEvaluating {rating_system_name} on {game_short_name}')
+                rating_system_class = RATING_SYSTEM_MAP[rating_system_name]
+                params = {}
+                if hyperparameter_config == 'default':
+                    print('No hyperparameter config specified, using class default hyperparameters')
                 else:
-                    print(f"couldn't find param config for {rating_system_name} on {game_name}, Exiting.")
-                    raise FileNotFoundError
+                    params_path = f'{hyperparameter_config}/{game_short_name}/{rating_system_name}.json'
+                    if os.path.exists(params_path):
+                        params = json.load(open(params_path))['best_params']
+                        print(f'Using hyperparameters from {params_path}')
+                        print(params)
+                    else:
+                        print(f"couldn't find param config for {rating_system_name} on {game_name}, Exiting.")
+                        raise FileNotFoundError
+                    
+                yield (game_name, rating_system_name, dataset, rating_system_class, params, test_mask)
+            
+                
+    pool = multiprocessing.Pool(processes=8)
+    eval_results = pool.imap(eval_func, eval_iterator())
+    for game_name, rating_system_name, metrics in eval_results:
+        results[game_name][rating_system_name] = metrics
 
-            rating_system = rating_system_class(competitors=dataset.competitors, **params)
-            metrics = evaluate(rating_system, dataset, metrics_mask=test_mask)
-            results[game_name][name] = metrics
+
     return results
 
 
