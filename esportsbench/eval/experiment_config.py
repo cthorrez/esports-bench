@@ -15,7 +15,7 @@ class ExperimentConfig:
     # * game (only present if fine sweep)
     # * rating_system
     # * param_name
-    sweep_config: dict = None
+    broad_sweep_config: dict = None
 
     # set this if doing a fine sweep
     sweep_results_path: str = None

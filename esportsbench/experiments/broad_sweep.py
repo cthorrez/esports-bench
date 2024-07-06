@@ -19,7 +19,7 @@ def main(config: DictConfig):
         rating_systems=config.rating_systems,
         data_dir=config.data_dir,
         granularity='broad',
-        sweep_config=config.sweep_config,
+        sweep_config=config.broad_sweep_config,
         rating_period=config.rating_period,
         train_end_date=config.train_end_date,
         test_end_date=config.test_end_date,

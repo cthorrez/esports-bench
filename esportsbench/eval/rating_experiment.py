@@ -20,19 +20,33 @@ def main(config: DictConfig):
     else:
         games = config.games
 
+    common_sweep_args = {
+        'data_dir' : config.data_dir,
+        'rating_period': config.rating_period,
+        'train_end_date' : config.train_end_date,
+        'test_end_date' : config.test_end_date,
+        'num_samples' : config.num_samples,
+        'num_processes' : config.num_processes,
+    }
 
-    sweep(
-        games=games,
-        rating_systems=config.rating_systems,
-        data_dir=config.data_dir,
-        granularity='broad',
-        sweep_config=config.sweep_config,
-        rating_period=config.rating_period,
-        train_end_date=config.train_end_date,
-        test_end_date=config.test_end_date,
-        num_samples=config.num_samples,
-        num_processes=config.num_processes,
-    )
+
+    for game in games:
+        sweep(
+            games=[game],
+            rating_systems=config.rating_systems,
+            granularity='broad',
+            sweep_config=config.broad_sweep_config,
+            **common_sweep_args
+        )
+
+        fine_sweep_config = 'TODO'
+        sweep(
+            games=[game],
+            rating_systems=config.rating_systems,
+            granularity='fine',
+            sweep_config=fine_sweep_config,
+            **common_sweep_args,
+        )
 
 if __name__ == '__main__':
     main()
