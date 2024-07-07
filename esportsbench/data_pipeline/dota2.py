@@ -13,7 +13,7 @@ class Dota2DataPipeline(LPDBDataPipeline):
         'dota2.jsonl': {
             'wiki': 'dota2',
             'query': 'date, match2opponents, winner, resulttype, extradata, finished, bestof, match2id',
-            'conditions': '[[game::dota2]] AND [[mode::team]] AND [[finished::1]] AND [[walkover::!1]] AND [[walkover::!2]]',
+            'conditions': '[[game::dota2]] AND [[mode::team]] AND [[finished::1]] AND [[walkover::!1]] AND [[walkover::!2]] AND [[walkover::!ff]] AND [[resulttype::!default]]',
             'order': 'date ASC, match2id ASC',
         }
     }
