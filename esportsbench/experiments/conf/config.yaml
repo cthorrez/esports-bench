@@ -12,4 +12,4 @@ rating_systems: 'all'
 # this will load the values from the listed file
 defaults:
   - _self_
-  - sweep_config: broad
+  - broad_sweep_config: default

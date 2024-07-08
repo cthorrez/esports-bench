@@ -3,6 +3,7 @@ import os
 import pathlib
 import json
 import warnings
+from collections import defaultdict
 from typing import Dict
 import numpy as np
 from riix.eval import grid_search
@@ -12,6 +13,15 @@ from esportsbench.eval.bench import RATING_SYSTEM_MAP
 # Suppress overflow warnings since many of the combinations swept over are expected to be numerically unstable
 warnings.filterwarnings('ignore', category=RuntimeWarning)
 
+
+def round_dict(dic, precision=4):
+    out_dic = {}
+    for key, val in dic.items():
+        if isinstance(val, float):
+            out_dic[key] = round(val, precision)
+        else:
+            out_dic[key] = val
+    return out_dic
 
 def construct_param_configurations(
     param_configs,
@@ -53,6 +63,7 @@ def sweep(
     num_samples=100,
     num_processes=8,
 ):
+    sweep_results = defaultdict(dict)
     results_dir = pathlib.Path(__file__).parents[1] / 'experiments' / 'conf' / 'sweep_results' / f'{granularity}_sweep_{rating_period}_{num_samples}'
     os.makedirs(results_dir, exist_ok=True)
     for dataset_name in games:
@@ -94,12 +105,17 @@ def sweep(
                 minimize_metric=True,
                 num_processes=num_processes,
             )
-            print(best_params)
-            print(best_metrics)
+            print('best hyperparameters:')
+            print(round_dict(best_params))
+            print('best metrics:')
+            print(round_dict(best_metrics))
             out_dict = {'best_params': best_params.copy(), 'best_metrics': best_metrics.copy()}
             out_dir = f'{results_dir}/{dataset_name}'
             os.makedirs(out_dir, exist_ok=True)
             out_file_path = f'{out_dir}/{rating_system_name}.json'
             json.dump(out_dict, open(out_file_path, 'w'), indent=2)
+            sweep_results[dataset_name][rating_system_name] = best_params
             del best_metrics, best_params
+    return sweep_results
+
 

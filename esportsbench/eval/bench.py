@@ -45,6 +45,7 @@ RATING_SYSTEM_MAP = {
     # 'elom': EloMentum,
     # 'yuksel': Yuksel2024,
 }
+ALL_RATING_SYSTEMS = list(RATING_SYSTEM_MAP.keys())
 
 
 def add_mean_metrics(data_dict):
@@ -111,7 +112,7 @@ def run_benchmark(
                 params = {}
                 if hyperparameter_config == 'default':
                     print('No hyperparameter config specified, using class default hyperparameters')
-                else:
+                elif isinstance(hyperparameter_config, str):
                     params_path = f'{hyperparameter_config}/{game_short_name}/{rating_system_name}.json'
                     if os.path.exists(params_path):
                         params = json.load(open(params_path))['best_params']
@@ -120,6 +121,13 @@ def run_benchmark(
                     else:
                         print(f"couldn't find param config for {rating_system_name} on {game_name}, Exiting.")
                         raise FileNotFoundError
+                elif isinstance(hyperparameter_config, dict):
+                    print('Using provided hyperparameters:')
+                    params = hyperparameter_config[game_short_name][rating_system_name]
+                    print(params)
+                else:
+                    print(hyperparameter_config)
+                    raise ValueError('Expected config to be either a path or a dict')
                     
                 yield (game_name, rating_system_name, dataset, rating_system_class, params, test_mask)
             
@@ -144,8 +152,8 @@ def print_results(data_dict):
     for game, rating_systems in data_dict.items():
         acc_latex_line = f'{game} & accuracy'
         ll_latex_line =f'{game} & log loss'
-        rating_system_names = ['elo', 'glicko', 'glicko2', 'trueskill', 'wl_bt', 'wl_tm', 'melo', 'genelo', 'vskf_bt', 'vskf_tm', 'velo']
-        for rating_system_name in rating_system_names:
+        # for rating_system_name in rating_system_names:
+        for rating_system_name in rating_systems.keys():
             metrics = rating_systems[rating_system_name]
             accuracy = f"{metrics.get('accuracy', 'N/A'):.4f}".rjust(10)
             accuracy_without_draws = f"{metrics.get('accuracy_without_draws', 'N/A'):.4f}".rjust(10)
@@ -162,20 +170,19 @@ def print_results(data_dict):
 
 
 if __name__ == '__main__':
-    all_rating_systems = list(RATING_SYSTEM_MAP.keys())
     parser = get_games_argparser()
     parser.add_argument(
         '-rs',
         '--rating_systems',
-        type=comma_separated(all_rating_systems),
-        default=all_rating_systems,
+        type=comma_separated(ALL_RATING_SYSTEMS),
+        default=ALL_RATING_SYSTEMS,
     )
     parser.add_argument('-dd', '--drop_draws', action='store_true')
     parser.add_argument('-rp', '--rating_period', type=str, required=False, default='7D')
     parser.add_argument('--train_end_date', type=str, default='2023-03-31', help='inclusive end date for test set')
     parser.add_argument('--test_end_date', type=str, default='2024-03-31', help='inclusive end date for test set')
     parser.add_argument('-d', '--data_dir', type=str, default='hf_data')
-    parser.add_argument('-c', '--hyperparameter_config', type=str, required=False)
+    parser.add_argument('-c', '--hyperparameter_config', type=str, required=False, default='default')
     args = parser.parse_args()
 
     results = run_benchmark(
