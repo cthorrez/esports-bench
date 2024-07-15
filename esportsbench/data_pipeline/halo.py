@@ -12,7 +12,7 @@ class HaloDataPipeline(LPDBDataPipeline):
         'halo.jsonl': {
             'wiki': 'halo',
             'query': 'date, match2opponents, winner, resulttype, finished, bestof',
-            'conditions': '[[mode::team]] AND [[walkover::!1]] AND [[walkover::!2]] AND [[walkover::!ff]] AND [[finished::1]] AND [[section::!Showmatch]] AND [[liquipediatiertype::!Showmatch]]',
+            'conditions': '[[mode::team]] AND [[walkover::!1]] AND [[walkover::!2]] AND [[walkover::!ff]] AND [[walkover::!dq]] AND [[resulttype::!default]] AND [[finished::1]] AND [[section::!Showmatch]] AND [[liquipediatiertype::!Showmatch]]',
             'order': 'date ASC, match2id ASC',
         }
     }
@@ -29,6 +29,10 @@ class HaloDataPipeline(LPDBDataPipeline):
         # filter out matches without exactly 2 teams
         not_two_teams_expr = pl.col('match2opponents').list.len() != 2
         df = self.filter_invalid(df, not_two_teams_expr, 'not_two_teams')
+
+        # filter out 2V2 matches
+        two_v_two_expr = pl.col('pagename').str.to_lowercase().str.contains('2v2')
+        df = self.filter_invalid(df, two_v_two_expr, 'two_v_two')
 
         # extract team names and scores
         df = df.with_columns(
@@ -67,8 +71,11 @@ class HaloDataPipeline(LPDBDataPipeline):
         )
 
         # filter out matches with placeholder teams or without any results recorded
-        placeholder_expr = (pl.col('team_1') == 'tbd') & (pl.col('team_2') == 'tbd')
-        df = self.filter_invalid(df, placeholder_expr, 'placeholder')
+        invalid_competitor_expr = (
+            pl.col('team_1').str.to_lowercase().is_in(self.invalid_competitor_names) 
+            | pl.col('team_2').str.to_lowercase().is_in(self.invalid_competitor_names)
+        )
+        df = self.filter_invalid(df, invalid_competitor_expr, 'invalid_competitor')
 
         missing_team_expr = is_null_or_empty('team_1') | is_null_or_empty('team_2')
         df = self.filter_invalid(df, missing_team_expr, 'missing_team')
