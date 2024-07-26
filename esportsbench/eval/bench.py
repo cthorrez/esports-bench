@@ -20,6 +20,7 @@ from riix.models.elo_davidson import EloDavidson
 from riix.models.skf import VSKF
 from riix.models.elomentum import EloMentum
 from riix.models.yuksel_2024 import Yuksel2024
+from riix.models.autograd_rating_system import AutogradRatingSystem
 from esportsbench.arg_parsers import get_games_argparser, comma_separated
 from esportsbench.datasets import load_dataset
 from esportsbench.constants import GAME_NAME_MAP
@@ -44,6 +45,7 @@ RATING_SYSTEM_MAP = {
     # 'elod': EloDavidson,
     # 'elom': EloMentum,
     # 'yuksel': Yuksel2024,
+    'autograd' : AutogradRatingSystem
 }
 ALL_RATING_SYSTEMS = list(RATING_SYSTEM_MAP.keys())
 
@@ -77,6 +79,7 @@ def eval_func(input_tuple):
     game_name, rating_system_name, dataset, rating_system_class, params, test_mask = input_tuple
     rating_system = rating_system_class(competitors=dataset.competitors, **params)
     metrics = evaluate(rating_system, dataset, metrics_mask=test_mask)
+    # rating_system.print_leaderboard(5)
     return (game_name, rating_system_name, metrics)
 
 def run_benchmark(

@@ -151,6 +151,9 @@ class Starcraft1DataPipeline(LPDBDataPipeline):
         ).str.to_lowercase().is_in(self.placeholder_player_names)
         df = self.filter_invalid(df, placeholder_expr, 'placeholder')
 
+        unknown_expr = (pl.col('player_1').str.to_lowercase() == 'unknown') | (pl.col('player_2').str.to_lowercase() == 'unknown')
+        df = self.filter_invalid(df, unknown_expr, 'unknown_player')
+
         missing_player_expr = is_null_or_empty('player_1') | is_null_or_empty('player_2')
         df = self.filter_invalid(df, missing_player_expr, 'missing_team')
 
