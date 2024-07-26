@@ -7,7 +7,10 @@ DATA_DIR = pathlib.Path(__file__).parents[2] / 'data'
 
 def main(destination):
     os.makedirs(DATA_DIR / destination, exist_ok=True)
-    dataset = load_dataset('EsportsBench/EsportsBench')
+    dataset = load_dataset(
+        'EsportsBench/EsportsBench',
+        revision='1.0'
+    )
     dataset.set_format('pandas')
     for split in dataset:
         dataset[split].to_csv(DATA_DIR / destination / f'{split}.csv')

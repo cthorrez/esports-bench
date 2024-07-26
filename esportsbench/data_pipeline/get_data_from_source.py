@@ -14,7 +14,7 @@ from esportsbench.data_pipeline.dota2 import Dota2DataPipeline
 from esportsbench.data_pipeline.valorant import ValorantDataPipeline
 from esportsbench.data_pipeline.overwatch import OverwatchDataPipeline
 from esportsbench.data_pipeline.warcraft3 import Warcraft3DataPipeline
-from esportsbench.data_pipeline.rainbox_six import RainbowSixDataPipeline
+from esportsbench.data_pipeline.rainbow_six import RainbowSixDataPipeline
 from esportsbench.data_pipeline.halo import HaloDataPipeline
 from esportsbench.data_pipeline.call_of_duty import CallOfDutyDataPipeline
 from esportsbench.data_pipeline.tetris import TetrisDataPipeline

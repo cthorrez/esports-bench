@@ -80,8 +80,8 @@ def postprocess(train_end_date, test_end_date, min_rows_year):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--train_end_date', type=str, default='2023-03-31', help='inclusive end date for test set')
-    parser.add_argument('--test_end_date', type=str, default='2024-03-31', help='inclusive end date for test set')
+    parser.add_argument('--train_end_date', type=str, default='2023-06-30', help='inclusive end date for test set')
+    parser.add_argument('--test_end_date', type=str, default='2024-06-30', help='inclusive end date for test set')
     parser.add_argument('--min_rows_year', type=int, default=100, help='minmum number of rows in a year to begin including data')
     args = vars(parser.parse_args())
     postprocess(**args)
