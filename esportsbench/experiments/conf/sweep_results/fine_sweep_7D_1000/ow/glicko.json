@@ -1,0 +1,13 @@
+{
+  "best_params": {
+    "initial_rating_dev": 236.99983899136956,
+    "c": 30.60442944286877
+  },
+  "best_metrics": {
+    "accuracy": 0.638181167772964,
+    "accuracy_without_draws": 0.6394336822684795,
+    "log_loss": 0.6184212066193621,
+    "brier_score": 0.2133484457117594,
+    "duration": 0.31798267364501953
+  }
+}

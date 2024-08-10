@@ -1,0 +1,15 @@
+# default hyperparameters
+
+data_dir: 'hf_data'
+train_end_date: '2023-03-31'
+test_end_date: '2024-03-31'
+rating_period: null
+num_samples: 1000
+num_processes: 8
+games: 'all'
+rating_systems: 'all'
+
+# this will load the values from the listed file
+defaults:
+  - _self_
+  - sweep_config: broad
