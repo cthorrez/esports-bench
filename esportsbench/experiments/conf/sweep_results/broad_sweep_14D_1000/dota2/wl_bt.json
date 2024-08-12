@@ -1,0 +1,14 @@
+{
+  "best_params": {
+    "initial_sigma": 39.82268649091715,
+    "beta": 31.95213389327517,
+    "kappa": 4.4140770756320774e-05
+  },
+  "best_metrics": {
+    "accuracy": 0.6156791798582844,
+    "accuracy_without_draws": 0.6255933479556094,
+    "log_loss": 0.6485590275118358,
+    "brier_score": 0.2088183868167453,
+    "duration": 2.939563274383545
+  }
+}

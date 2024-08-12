@@ -45,7 +45,7 @@ RATING_SYSTEM_MAP = {
     # 'elod': EloDavidson,
     # 'elom': EloMentum,
     # 'yuksel': Yuksel2024,
-    'autograd' : AutogradRatingSystem
+    # 'autograd' : AutogradRatingSystem
 }
 ALL_RATING_SYSTEMS = list(RATING_SYSTEM_MAP.keys())
 
@@ -140,7 +140,7 @@ def run_benchmark(
     for game_name, rating_system_name, metrics in eval_results:
         results[game_name][rating_system_name] = metrics
 
-
+    results = add_mean_metrics(results)
     return results
 
 
@@ -198,5 +198,4 @@ if __name__ == '__main__':
         drop_draws=args.drop_draws,
         hyperparameter_config=args.hyperparameter_config
     )
-    results = add_mean_metrics(results)
     print_results(results)

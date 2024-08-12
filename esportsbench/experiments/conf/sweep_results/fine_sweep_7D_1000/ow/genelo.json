@@ -1,0 +1,12 @@
+{
+  "best_params": {
+    "sigma": 174.10508479147393
+  },
+  "best_metrics": {
+    "accuracy": 0.6326960531022696,
+    "accuracy_without_draws": 0.6338988489150924,
+    "log_loss": 0.6227858524484362,
+    "brier_score": 0.21502085530076734,
+    "duration": 0.05599665641784668
+  }
+}

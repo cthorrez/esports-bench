@@ -1,0 +1,14 @@
+{
+  "best_params": {
+    "dimension": 1,
+    "eta_r": 47.191824463444526,
+    "eta_c": 0.12800298266478194
+  },
+  "best_metrics": {
+    "accuracy": 0.7125959683824363,
+    "accuracy_without_draws": 0.7137438685881592,
+    "log_loss": 0.5417775722163102,
+    "brier_score": 0.18223223487744297,
+    "duration": 1.440981149673462
+  }
+}
