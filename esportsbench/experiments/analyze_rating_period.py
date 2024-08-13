@@ -1,8 +1,54 @@
 import os
 import pickle
+import numpy as np
 import matplotlib.pyplot as plt
 from esportsbench.arg_parsers import get_games_argparser, comma_separated
 from esportsbench.eval.bench import run_benchmark, ALL_RATING_SYSTEMS
+
+
+def plot_metrics_vs_duration(data, durations):
+    # Extract unique methods
+    methods = set()
+    for experiment in data:
+        for dataset in experiment.values():
+            methods.update(dataset.keys())
+    methods = list(methods)
+
+    # Calculate mean accuracy and log loss for each method and duration
+    mean_metrics = {method: {'accuracy': [], 'log_loss': []} for method in methods}
+    for experiment, duration in zip(data, durations):
+        for method in methods:
+            metrics = [dataset[method] for dataset in experiment.values() if method in dataset]
+            if metrics:
+                mean_metrics[method]['accuracy'].append(np.mean([m['accuracy'] for m in metrics]))
+                mean_metrics[method]['log_loss'].append(np.mean([m['log_loss'] for m in metrics]))
+            else:
+                mean_metrics[method]['accuracy'].append(np.nan)
+                mean_metrics[method]['log_loss'].append(np.nan)
+
+    # Create the plots
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(20, 6))
+    
+    # Accuracy plot
+    for method in methods:
+        ax1.plot(durations, mean_metrics[method]['accuracy'], marker='o', label=method)
+    ax1.set_xlabel('Duration (days)')
+    ax1.set_ylabel('Mean Accuracy')
+    ax1.set_title('Mean Accuracy vs. Duration for Each Method')
+    ax1.legend()
+    ax1.grid(True, linestyle='--', alpha=0.7)
+    
+    # Log Loss plot
+    for method in methods:
+        ax2.plot(durations, mean_metrics[method]['log_loss'], marker='o', label=method)
+    ax2.set_xlabel('Duration (days)')
+    ax2.set_ylabel('Mean Log Loss')
+    ax2.set_title('Mean Log Loss vs. Duration for Each Method')
+    ax2.legend()
+    ax2.grid(True, linestyle='--', alpha=0.7)
+    
+    plt.tight_layout()
+    plt.show()
 
 def main(
     games,
@@ -37,6 +83,8 @@ def main(
             metrics.append(results)
             print(results)
         pickle.dump(metrics, open(metrics_file, 'wb'))
+
+    plot_metrics_vs_duration(metrics, rating_periods)
 
 
 

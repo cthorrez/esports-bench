@@ -163,3 +163,5 @@ data/
 .env
 
 **/*\.hydra/*\.yaml
+
+*.pkl
