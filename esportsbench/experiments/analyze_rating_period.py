@@ -34,7 +34,7 @@ def plot_metrics_vs_duration(data, durations):
         ax1.plot(durations, mean_metrics[method]['accuracy'], marker='o', label=method)
     ax1.set_xlabel('Duration (days)')
     ax1.set_ylabel('Mean Accuracy')
-    ax1.set_title('Mean Accuracy vs. Duration for Each Method')
+    ax1.set_title('Mean Accuracy vs. Duration')
     ax1.legend()
     ax1.grid(True, linestyle='--', alpha=0.7)
     
@@ -43,11 +43,12 @@ def plot_metrics_vs_duration(data, durations):
         ax2.plot(durations, mean_metrics[method]['log_loss'], marker='o', label=method)
     ax2.set_xlabel('Duration (days)')
     ax2.set_ylabel('Mean Log Loss')
-    ax2.set_title('Mean Log Loss vs. Duration for Each Method')
+    ax2.set_title('Mean Log Loss vs. Duration')
     ax2.legend()
     ax2.grid(True, linestyle='--', alpha=0.7)
     
     plt.tight_layout()
+    plt.savefig('rating_period_plots.png')
     plt.show()
 
 def main(
