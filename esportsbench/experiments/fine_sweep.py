@@ -32,7 +32,8 @@ def construct_fine_sweep_config(broad_sweep_config, param_bounds, low_multiplier
         for rating_system, best_params in game_config.items():
             fine_rating_system_config = {}
             for param_name, best_value in best_params.items():
-                if param_name in param_bounds[rating_system]:
+                lower_bound = upper_bound = None
+                if (rating_system in param_bounds) and (param_name in param_bounds[rating_system]):
                     if param_bounds[rating_system][param_name].get('param_type') == 'list':
                         fine_rating_system_config[param_name] = HyperparameterConfig(param_type='list', options=[best_value])
                         continue

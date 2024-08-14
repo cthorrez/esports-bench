@@ -21,6 +21,7 @@ from riix.models.skf import VSKF
 from riix.models.elomentum import EloMentum
 from riix.models.yuksel_2024 import Yuksel2024
 from riix.models.autograd_rating_system import AutogradRatingSystem
+from riix.models.baselines import BaselineRatingSystem
 from esportsbench.arg_parsers import get_games_argparser, comma_separated
 from esportsbench.datasets import load_dataset
 from esportsbench.constants import GAME_NAME_MAP
@@ -46,6 +47,10 @@ RATING_SYSTEM_MAP = {
     # 'elom': EloMentum,
     # 'yuksel': Yuksel2024,
     # 'autograd' : AutogradRatingSystem
+    'random_base' : partial(BaselineRatingSystem, mode='random'),
+    'wr_base' : partial(BaselineRatingSystem, mode='win_rate'),
+    'win_base' : partial(BaselineRatingSystem, mode='wins'),
+    'appearance_base' : partial(BaselineRatingSystem, mode='appearances'),
 }
 ALL_RATING_SYSTEMS = list(RATING_SYSTEM_MAP.keys())
 
@@ -92,6 +97,7 @@ def run_benchmark(
     drop_draws=False,
     max_rows=None,
     hyperparameter_config='default',
+    num_processes=8,
 ):
     """run a benchmark where all rating systems use default values"""
     results = defaultdict(dict)
@@ -135,7 +141,7 @@ def run_benchmark(
                 yield (game_name, rating_system_name, dataset, rating_system_class, params, test_mask)
             
                 
-    pool = multiprocessing.Pool(processes=8)
+    pool = multiprocessing.Pool(processes=num_processes)
     eval_results = pool.imap(eval_func, eval_iterator())
     for game_name, rating_system_name, metrics in eval_results:
         results[game_name][rating_system_name] = metrics
@@ -186,6 +192,7 @@ if __name__ == '__main__':
     parser.add_argument('--test_end_date', type=str, default='2024-03-31', help='inclusive end date for test set')
     parser.add_argument('-d', '--data_dir', type=str, default='hf_data')
     parser.add_argument('-c', '--hyperparameter_config', type=str, required=False, default='default')
+    parser.add_argument('-np', '--num_processes', type=int, default=8)
     args = parser.parse_args()
 
     results = run_benchmark(
@@ -196,6 +203,7 @@ if __name__ == '__main__':
         test_end_date=args.test_end_date,
         data_dir=args.data_dir,
         drop_draws=args.drop_draws,
-        hyperparameter_config=args.hyperparameter_config
+        hyperparameter_config=args.hyperparameter_config,
+        num_processes=args.num_processes,
     )
     print_results(results)
