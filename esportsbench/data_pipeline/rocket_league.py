@@ -1,7 +1,7 @@
 """classes and functions for ingesting and processing rocket league data"""
 import polars as pl
 from esportsbench.data_pipeline.data_pipeline import LPDBDataPipeline
-from esportsbench.utils import is_null_or_empty, invalid_date_expr
+from esportsbench.utils import is_null_or_empty, invalid_date_expr, debug_ndjson
 
 
 class RocketLeagueDataPipeline(LPDBDataPipeline):
@@ -23,8 +23,11 @@ class RocketLeagueDataPipeline(LPDBDataPipeline):
         super().__init__(rows_per_request=rows_per_request, timeout=timeout, **kwargs)
 
     def process_data(self):
-        df = pl.scan_ndjson(self.raw_data_dir / 'rocket_league.jsonl', infer_schema_length=50000).collect()
-
+        df = pl.scan_ndjson(
+            self.raw_data_dir / 'rocket_league.jsonl',
+            infer_schema_length=158638,
+            ignore_errors=False
+        ).collect()
         print(f'initial row count: {df.shape[0]}')
 
         df = self.filter_invalid(df, invalid_date_expr, 'invalid_date')

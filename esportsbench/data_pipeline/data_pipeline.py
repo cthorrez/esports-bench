@@ -127,6 +127,11 @@ class DataPipeline(ABC):
                         for key, value in self.schema_overrides.items():
                             if key in row:
                                 row[key] = value(row[key])
+                    # HACKY HACKY HACK
+                    if ('match2opponents' in row):
+                        for opp in row['match2opponents']:
+                            if ('extradata' in opp) and (opp['extradata'] == []):
+                                opp['extradata'] = None
                     out_file.write(json.dumps(row) + '\n')
                 out_file.flush()
                 if num_rows >= self.max_rows:
