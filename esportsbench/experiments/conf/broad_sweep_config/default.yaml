@@ -4,112 +4,142 @@ elo:
     min_value: 3.2
     max_value: 320.0
 
-glicko:
-  initial_rating_dev:
-    min_value: 10.
+# glicko:
+#   initial_rating_dev:
+#     min_value: 10.
+#     max_value: 1000.0
+#   c:
+#     min_value: 0.01
+#     max_value: 100.0
+
+# glicko2:
+#   initial_rd:
+#     min_value: 20.0
+#     max_value: 700.0
+#   initial_sigma:
+#     min_value: 0.012
+#     max_value: 0.3
+#   tau:
+#     min_value: 0.2
+#     max_value: 1.2
+
+# trueskill:
+#   initial_sigma:
+#     min_value: 0.8333
+#     max_value: 83.33
+#   beta:
+#     min_value: 0.4166 
+#     max_value: 41.66
+#   tau:
+#     min_value: 0.00833
+#     max_value: 0.833
+
+# vskf_bt:
+#   v_0:
+#     min_value: 1.0e-6
+#     max_value: 10.0
+#   beta:
+#     min_value: 0.9
+#     max_value: 1.0
+#   s:
+#     min_value: 0.1
+#     max_value: 10.0
+#   epsilon:
+#     min_value: 1.0e-3
+#     max_value: 0.1
+
+# vskf_tm:
+#   v_0:
+#     min_value: 1.0e-6
+#     max_value: 10.0
+#   beta:
+#     min_value: 0.9
+#     max_value: 1.0
+#   s:
+#     min_value: 0.1
+#     max_value: 10.0
+#   epsilon:
+#     min_value: 1.0e-3
+#     max_value: 0.1
+
+# wl_bt:
+#   initial_sigma:
+#     min_value: 0.8333
+#     max_value: 83.33
+#   beta:
+#     min_value: 0.4166 
+#     max_value: 41.66
+#   kappa:
+#     min_value: 1.0e-5
+#     max_value: 1.0e-3
+
+# wl_tm:
+#   initial_sigma:
+#     min_value: 0.8333
+#     max_value: 83.33
+#   beta:
+#     min_value: 0.4166 
+#     max_value: 41.66
+#   kappa:
+#     min_value: 1.0e-5
+#     max_value: 1.0e-3
+
+# melo:
+#   dimension:
+#     param_type: list
+#     options: [1, 5, 10]
+#   eta_r:
+#     min_value: 1.6
+#     max_value: 160.0
+#   eta_c:
+#     min_value: 0.01
+#     max_value: 1.0
+
+# velo:
+#   initial_sigma:
+#     min_value: 1.0e-6
+#     max_value: 10.0
+#   sigma_reduction_factor:
+#     min_value: 1.0e-6
+#     max_value: 1.0
+#   sigma_lower_bound:
+#     min_value: 1.0e-6
+#     max_value: 10.0
+#   b:
+#     min_value: 1.0e-6
+#     max_value: 10.0
+
+# genelo:
+#   sigma:
+#     min_value: 6.0
+#     max_value: 600.0
+
+random_base:
+  temperature:
+    min_value: 1.0e-3
+    max_value: 10.0
+
+wr_base:
+  temperature:
+    min_value: 1.0e-3
+    max_value: 10.0
+  prior:
+    min_value: 1.0
     max_value: 1000.0
-  c:
-    min_value: 0.01
-    max_value: 100.0
 
-glicko2:
-  initial_rd:
-    min_value: 20.0
-    max_value: 700.0
-  initial_sigma:
-    min_value: 0.012
-    max_value: 0.3
-  tau:
-    min_value: 0.2
-    max_value: 1.2
-
-trueskill:
-  initial_sigma:
-    min_value: 0.8333
-    max_value: 83.33
-  beta:
-    min_value: 0.4166 
-    max_value: 41.66
-  tau:
-    min_value: 0.00833
-    max_value: 0.833
-
-vskf_bt:
-  v_0:
-    min_value: 1.0e-6
-    max_value: 10.0
-  beta:
-    min_value: 0.9
-    max_value: 1.0
-  s:
-    min_value: 0.1
-    max_value: 10.0
-  epsilon:
+win_base:
+  temperature:
     min_value: 1.0e-3
-    max_value: 0.1
+    max_value: 10.0
+  prior:
+    min_value: 1.0
+    max_value: 1000.0
 
-vskf_tm:
-  v_0:
-    min_value: 1.0e-6
-    max_value: 10.0
-  beta:
-    min_value: 0.9
-    max_value: 1.0
-  s:
-    min_value: 0.1
-    max_value: 10.0
-  epsilon:
+appearance_base:
+  temperature:
     min_value: 1.0e-3
-    max_value: 0.1
-
-wl_bt:
-  initial_sigma:
-    min_value: 0.8333
-    max_value: 83.33
-  beta:
-    min_value: 0.4166 
-    max_value: 41.66
-  kappa:
-    min_value: 1.0e-5
-    max_value: 1.0e-3
-
-wl_tm:
-  initial_sigma:
-    min_value: 0.8333
-    max_value: 83.33
-  beta:
-    min_value: 0.4166 
-    max_value: 41.66
-  kappa:
-    min_value: 1.0e-5
-    max_value: 1.0e-3
-
-melo:
-  dimension:
-    param_type: list
-    options: [1, 5, 10]
-  eta_r:
-    min_value: 1.6
-    max_value: 160.0
-  eta_c:
-    min_value: 0.01
-    max_value: 1.0
-
-velo:
-  initial_sigma:
-    min_value: 1.0e-6
     max_value: 10.0
-  sigma_reduction_factor:
-    min_value: 1.0e-6
-    max_value: 1.0
-  sigma_lower_bound:
-    min_value: 1.0e-6
-    max_value: 10.0
-  b:
-    min_value: 1.0e-6
-    max_value: 10.0
-
-genelo:
-  sigma:
-    min_value: 6.0
-    max_value: 600.0
+  prior:
+    min_value: 1.0
+    max_value: 1000.0
+    

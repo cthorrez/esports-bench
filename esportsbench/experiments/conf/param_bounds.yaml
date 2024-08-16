@@ -86,3 +86,15 @@ velo:
 genelo:
   sigma:
     lower_bound: 1.0e-6
+
+wr_base:
+  prior:
+    lower_bound: 1.0e-6
+
+wr_win:
+  prior:
+    lower_bound: 1.0e-6
+
+wr_appearance:
+  prior:
+    lower_bound: 1.0e-6

@@ -1,0 +1,13 @@
+{
+  "best_params": {
+    "temperature": 0.002899826071827697,
+    "prior": 529.6005909397546
+  },
+  "best_metrics": {
+    "accuracy": 0.6077985565904326,
+    "accuracy_without_draws": 0.6081585224145312,
+    "log_loss": 0.6746905584786781,
+    "brier_score": 0.23968693131082233,
+    "duration": 0.20453810691833496
+  }
+}
