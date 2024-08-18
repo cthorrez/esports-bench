@@ -158,10 +158,10 @@ def print_results(data_dict):
     print(header_line)
     print('=' * len(header_line))
 
+    filler = '                                 '
     for game, rating_systems in data_dict.items():
-        acc_latex_line = f'{game} & accuracy'
-        ll_latex_line =f'{game} & log loss'
-        # for rating_system_name in rating_system_names:
+        acc_latex_line = f'{game} & Accuracy'
+        ll_latex_line =f'{filler} & Log Loss'
         for rating_system_name in rating_systems.keys():
             metrics = rating_systems[rating_system_name]
             accuracy = f"{metrics.get('accuracy', 'N/A'):.4f}".rjust(10)
@@ -169,7 +169,7 @@ def print_results(data_dict):
             log_loss = f"{metrics.get('log_loss', 'N/A'):.4f}".rjust(10)
             brier_score = f"{metrics.get('brier_score', 'N/A'):.4f}".rjust(12)
             duration = f"{metrics.get('duration', 'N/A'):.4f}".rjust(10)
-            # print(f'{game:<18}{rating_system_name:<30}{accuracy}{log_loss}{brier_score}{duration}')
+            print(f'{game:<18}{rating_system_name:<30}{accuracy}{log_loss}{brier_score}{duration}')
             print(f'{game:<18}{rating_system_name:<30}{accuracy_without_draws}{log_loss}{brier_score}{duration}')
 
             acc_latex_line += f' & {accuracy_without_draws}'
@@ -206,4 +206,5 @@ if __name__ == '__main__':
         hyperparameter_config=args.hyperparameter_config,
         num_processes=args.num_processes,
     )
+    json.dump(results, open('new_results.json', 'w'))
     print_results(results)
