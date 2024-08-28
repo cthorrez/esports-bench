@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from esportsbench.arg_parsers import get_games_argparser, comma_separated
 from esportsbench.eval.bench import run_benchmark, ALL_RATING_SYSTEMS
+from cycler import cycler
 
 
 def plot_metrics_vs_duration(data, durations):
@@ -26,29 +27,36 @@ def plot_metrics_vs_duration(data, durations):
                 mean_metrics[method]['accuracy'].append(np.nan)
                 mean_metrics[method]['log_loss'].append(np.nan)
 
+    # Set up colorblind-friendly color palette
+    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
+    markers = ['o', 's', '^', 'D', 'v', '<', '>', 'p', '*', 'h']
+    plt.rcParams['axes.prop_cycle'] = cycler(color=colors)
+
     # Create the plots
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(20, 6))
     
     # Accuracy plot
-    for method in methods:
-        ax1.plot(durations, mean_metrics[method]['accuracy'], marker='o', label=method)
-    ax1.set_xlabel('Duration (days)')
+    for i, method in enumerate(methods):
+        if method.endswith('_base'): continue
+        ax1.plot(durations, mean_metrics[method]['accuracy'], marker=markers[i % len(markers)], label=method)
+    ax1.set_xlabel('Rating Period Length (days)')
     ax1.set_ylabel('Mean Accuracy')
-    ax1.set_title('Mean Accuracy vs. Duration')
+    ax1.set_title('Mean Accuracy vs. Rating Period Length')
     ax1.legend()
     ax1.grid(True, linestyle='--', alpha=0.7)
     
     # Log Loss plot
-    for method in methods:
-        ax2.plot(durations, mean_metrics[method]['log_loss'], marker='o', label=method)
-    ax2.set_xlabel('Duration (days)')
+    for i, method in enumerate(methods):
+        if method.endswith('_base'): continue
+        ax2.plot(durations, mean_metrics[method]['log_loss'], marker=markers[i % len(markers)], label=method)
+    ax2.set_xlabel('Rating Period Length (days)')
     ax2.set_ylabel('Mean Log Loss')
-    ax2.set_title('Mean Log Loss vs. Duration')
+    ax2.set_title('Mean Log Loss vs. Rating Period Length')
     ax2.legend()
     ax2.grid(True, linestyle='--', alpha=0.7)
     
     plt.tight_layout()
-    plt.savefig('rating_period_plots.png')
+    plt.savefig('rating_period_plots.png', dpi=1200)
     plt.show()
 
 def main(

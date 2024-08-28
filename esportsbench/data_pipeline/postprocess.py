@@ -71,8 +71,8 @@ def postprocess(train_end_date, test_end_date, min_rows_year):
         print(f'num train rows: {len(train_df)}')
         print(f'num test rows: {len(test_df)}')
 
-
-        output_file_path = data_dir / 'final_data' / input_file_path.name
+        os.makedirs(data_dir / 'final_data_v2', exist_ok=True)
+        output_file_path = data_dir / 'final_data_v2' / input_file_path.name
         df.drop('year').write_csv(output_file_path)
 
         print('======================================================')
