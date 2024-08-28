@@ -43,6 +43,8 @@ class FIFADataPipeline(LPDBDataPipeline):
         raw_games = raw_data['match2games']
         raw_opponents = raw_data['match2opponents']
         opponents = FIFADataPipeline.parse_opponents(raw_opponents)
+        if opponents[0] == {} or opponents[1] == {}:
+            return None
         games = json.loads(raw_games)
         outputs = []
         for idx, game in enumerate(games):
@@ -52,21 +54,32 @@ class FIFADataPipeline(LPDBDataPipeline):
                 continue
             if len(game['scores']) != 2:
                 continue
-            participant_ids = list(map(lambda x: int(x[2]), sorted(list(game['participants'].keys()))))
+            participant_keys = sorted(list(game['participants'].keys()))
+            participant_ids = list(map(lambda x: int(x[2]), participant_keys))
+            participant_names = [game['participants'][pk].get('name') for pk in participant_keys]
+            if 'tbd' in participant_names:
+                continue
             if len(participant_ids) != 2:
                 continue
             player_1_score, player_2_score = map(int, game['scores'])
             outcome = outcome_from_scores(player_1_score, player_2_score)
+            player_1 = participant_names[0]
+            if player_1 is None:
+                player_1 = opponents[0][participant_ids[0]]
+            player_2 = participant_names[1]
+            if player_2 is None:
+                player_2 = opponents[1][participant_ids[1]]
             outputs.append(
                 {
-                    'player_1': opponents[0][participant_ids[0]],
-                    'player_2': opponents[1][participant_ids[1]],
+                    'player_1': player_1,
+                    'player_2': player_2,
                     'player_1_score': float(player_1_score),
                     'player_2_score': float(player_2_score),
                     'outcome': outcome,
                     'game_idx': idx,
                 }
             )
+
         return outputs
 
     def unpack_team_matches(self, team_df):
