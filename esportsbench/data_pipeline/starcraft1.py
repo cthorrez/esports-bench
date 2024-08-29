@@ -14,13 +14,13 @@ class Starcraft1DataPipeline(LPDBDataPipeline):
         'starcraft1_1v1.jsonl': {
             'wiki': 'starcraft',
             'query': 'date, match2opponents, winner, resulttype, finished, bestof, match2id',
-            'conditions': '([[mode::1_1]] OR [[mode::solo]] or [[mode::1v1]]) AND [[walkover::!1]] AND [[walkover::!2]] AND [[walkover::!ff]] AND [[finished::1]]',
+            'conditions': '[[mode::solo]] AND [[walkover::!1]] AND [[walkover::!2]] AND [[walkover::!ff]] AND [[finished::1]]',
             'order': 'date ASC, match2id ASC',
         },
         'starcraft1_team.jsonl': {
             'wiki': 'starcraft',
             'query': 'date, match2games, mode, resulttype, match2id',
-            'conditions': '([[mode::team_team]] OR [[mode::team]] OR [[mode::mixed]]) AND [[walkover::!1]] AND [[walkover::!2]] AND [[walkover::!ff]] AND [[finished::1]] AND [[resulttype::!default]]',
+            'conditions': '([[mode::team]] OR [[mode::mixed]]) AND [[walkover::!1]] AND [[walkover::!2]] AND [[walkover::!ff]] AND [[finished::1]]',
             'order': 'date ASC, match2id ASC',
         },
     }
