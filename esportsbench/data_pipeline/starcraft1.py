@@ -28,78 +28,6 @@ class Starcraft1DataPipeline(LPDBDataPipeline):
     def __init__(self, rows_per_request=1000, timeout=60.0, **kwargs):
         super().__init__(rows_per_request=rows_per_request, timeout=timeout, **kwargs)
 
-    @staticmethod
-    def unpack_team_match(raw_games):
-        if raw_games == '[]':
-            return None
-        games = json.loads(raw_games)
-        outputs = []
-        for idx, game in enumerate(games):
-            if game['mode'] == '2v2':
-                continue
-            if game['participants'] == []:
-                continue
-            if len(game['participants']) != 2:
-                continue
-            if len(game['scores']) != 2:
-                continue
-            players = [participant['player'] for participant in game['participants'].values()]
-            player_1, player_2 = players
-            player_1_score, player_2_score = map(float, game['scores'])
-            outcome = outcome_from_scores(player_1_score, player_2_score)
-
-            outputs.append(
-                {
-                    'player_1': player_1,
-                    'player_2': player_2,
-                    'player_1_score': float(player_1_score),
-                    'player_2_score': float(player_2_score),
-                    'outcome': outcome,
-                    'game_idx': idx,
-                    'bestof': 1,
-                }
-            )
-        return outputs
-
-    def unpack_team_matches(self, team_df):
-
-        team_match_struct = pl.Struct([
-            pl.Field("player_1", pl.Utf8),
-            pl.Field("player_2", pl.Utf8),
-            pl.Field("player_1_score", pl.Float64),
-            pl.Field("player_2_score", pl.Float64),
-            pl.Field("outcome", pl.Float64),
-            pl.Field("game_idx", pl.Int64),
-            pl.Field("bestof", pl.Int64)
-        ])
-
-        team_df = team_df.with_columns(
-            pl.col('match2games').map_elements(
-                function=self.unpack_team_match,
-                skip_nulls=True,
-                return_dtype=pl.List(team_match_struct)
-            ).alias('games')
-        )
-
-        games_df = team_df.explode('games').unnest('games')
-        bad_team_game_expr = (
-            is_null_or_empty(pl.col('player_1'))
-            | is_null_or_empty(pl.col('player_2'))
-            | is_null_or_empty(pl.col('player_1_score'))
-            | is_null_or_empty(pl.col('player_2_score'))
-            | (pl.col('player_1_score') == -1)
-            | (pl.col('player_2_score') == -1)
-        )
-        games_df = self.filter_invalid(games_df, bad_team_game_expr, 'bad_team_game')
-
-        games_df = games_df.with_columns(
-            pl.col('player_1_score').cast(pl.Float64).alias('player_1_score'),
-            pl.col('player_2_score').cast(pl.Float64).alias('player_2_score'),
-            pl.concat_str([pl.col('match2id'), pl.col('game_idx').cast(pl.Utf8)], separator='_').alias('match2id'),
-        )
-
-        return games_df
-
     def process_data(self):
         df = pl.scan_ndjson(
             self.raw_data_dir / 'starcraft1_1v1.jsonl', infer_schema_length=100, ignore_errors=True
@@ -109,7 +37,7 @@ class Starcraft1DataPipeline(LPDBDataPipeline):
 
         df = self.filter_invalid(df, invalid_date_expr, 'invalid_date')
 
-        # filter out matches without exactly 2 teams
+        # filter out matches without exactly 2 competitors
         not_two_players_expr = pl.col('match2opponents').list.len() != 2
         df = self.filter_invalid(df, not_two_players_expr, 'not_two_players')
 
