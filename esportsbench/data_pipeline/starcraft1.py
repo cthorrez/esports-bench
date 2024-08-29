@@ -29,13 +29,14 @@ class Starcraft1DataPipeline(LPDBDataPipeline):
         super().__init__(rows_per_request=rows_per_request, timeout=timeout, **kwargs)
 
     def process_data(self):
-        df = pl.scan_ndjson(
-            self.raw_data_dir / 'starcraft1_1v1.jsonl', infer_schema_length=100, ignore_errors=True
-        ).collect()
+        df = pl.read_ndjson(self.raw_data_dir / 'starcraft1_1v1.jsonl', infer_schema_length=97000 ,ignore_errors=False)
 
         print(f'initial 1v1 row count: {df.shape[0]}')
 
         df = self.filter_invalid(df, invalid_date_expr, 'invalid_date')
+
+        two_v_two_expr = pl.col('pagename').str.to_lowercase().str.contains('2v2')
+        df = self.filter_invalid(df, two_v_two_expr, '2v2')
 
         # filter out matches without exactly 2 competitors
         not_two_players_expr = pl.col('match2opponents').list.len() != 2
