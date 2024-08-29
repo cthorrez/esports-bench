@@ -14,17 +14,16 @@ class Starcraft1DataPipeline(LPDBDataPipeline):
         'starcraft1_1v1.jsonl': {
             'wiki': 'starcraft',
             'query': 'date, match2opponents, winner, resulttype, finished, bestof, match2id',
-            'conditions': '[[mode::1_1]] AND [[walkover::!1]] AND [[walkover::!2]] AND [[walkover::!ff]] AND [[finished::1]]',
+            'conditions': '([[mode::1_1]] OR [[mode::solo]] or [[mode::1v1]]) AND [[walkover::!1]] AND [[walkover::!2]] AND [[walkover::!ff]] AND [[finished::1]]',
             'order': 'date ASC, match2id ASC',
         },
         'starcraft1_team.jsonl': {
             'wiki': 'starcraft',
             'query': 'date, match2games, mode, resulttype, match2id',
-            'conditions': '[[mode::team_team]] AND [[walkover::!1]] AND [[walkover::!2]] AND [[walkover::!ff]] AND [[finished::1]] AND [[resulttype::!default]]',
+            'conditions': '([[mode::team_team]] OR [[mode::team]] OR [[mode::mixed]]) AND [[walkover::!1]] AND [[walkover::!2]] AND [[walkover::!ff]] AND [[finished::1]] AND [[resulttype::!default]]',
             'order': 'date ASC, match2id ASC',
         },
     }
-    placeholder_player_names = {'bye', 'tbd'}
 
     def __init__(self, rows_per_request=1000, timeout=60.0, **kwargs):
         super().__init__(rows_per_request=rows_per_request, timeout=timeout, **kwargs)
@@ -146,10 +145,11 @@ class Starcraft1DataPipeline(LPDBDataPipeline):
             .alias('player_2'),
         )
 
-        placeholder_expr = pl.col('player_1').str.to_lowercase().is_in(self.placeholder_player_names) | pl.col(
-            'player_2'
-        ).str.to_lowercase().is_in(self.placeholder_player_names)
-        df = self.filter_invalid(df, placeholder_expr, 'placeholder')
+        invalid_competitor_expr = (
+            pl.col('player_1').str.to_lowercase().is_in(self.invalid_competitor_names) 
+            | pl.col('player_2').str.to_lowercase().is_in(self.invalid_competitor_names)
+        )
+        df = self.filter_invalid(df, invalid_competitor_expr, 'invalid_competitor')
 
         unknown_expr = (pl.col('player_1').str.to_lowercase() == 'unknown') | (pl.col('player_2').str.to_lowercase() == 'unknown')
         df = self.filter_invalid(df, unknown_expr, 'unknown_player')
@@ -182,7 +182,6 @@ class Starcraft1DataPipeline(LPDBDataPipeline):
 
         team_matches = pl.scan_ndjson(self.raw_data_dir / 'starcraft1_team.jsonl', infer_schema_length=100).collect()
         team_matches = self.filter_invalid(team_matches, invalid_date_expr, 'invalid_date_team')
-
         print(f'initial team match row count: {team_matches.shape[0]}')
 
         team_games = self.unpack_team_matches(team_matches)
