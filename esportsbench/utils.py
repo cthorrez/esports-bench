@@ -26,10 +26,10 @@ def float_nullable(value):
 
 
 def is_null_or_empty(col):
-    """returns a polars expression for is the column is null or empty string"""
+    """returns a polars expression for is the column is null, empty string(or string False for some reason 😑"""
     if isinstance(col, str):
         col = pl.col(col)
-    return col.is_null() | (col.cast(pl.Utf8) == '')
+    return col.is_null() | (col.cast(pl.Utf8) == '') | (col.cast(pl.Utf8) == 'False')
 
 
 def delimited_list(string_list, delimiter=','):

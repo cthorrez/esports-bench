@@ -49,10 +49,12 @@ class Starcraft1DataPipeline(LPDBDataPipeline):
         )
         df = df.with_columns(
             pl.col('player_1_struct').struct.field('name').alias('player_1_name'),
+            pl.col('player_1_struct').struct.field('match2players').list.get(0).struct.field('displayname').alias('player_1_displayname'),
             pl.col('player_1_struct').struct.field('template').alias('player_1_template'),
             pl.col('player_1_struct').struct.field('score').cast(pl.Float64).alias('player_1_score'),
             pl.col('player_1_struct').struct.field('status').alias('player_1_status'),
             pl.col('player_2_struct').struct.field('name').alias('player_2_name'),
+            pl.col('player_2_struct').struct.field('match2players').list.get(0).struct.field('displayname').alias('player_2_displayname'),
             pl.col('player_2_struct').struct.field('template').alias('player_2_template'),
             pl.col('player_2_struct').struct.field('score').cast(pl.Float64).alias('player_2_score'),
             pl.col('player_2_struct').struct.field('status').alias('player_2_status'),
@@ -62,12 +64,16 @@ class Starcraft1DataPipeline(LPDBDataPipeline):
         df = df.with_columns(
             pl.when(~is_null_or_empty('player_1_name'))
             .then(pl.col('player_1_name'))
+            .when(~is_null_or_empty('player_1_displayname'))
+            .then(pl.col('player_1_displayname'))
             .when(~is_null_or_empty('player_1_template'))
             .then(pl.col('player_1_template'))
             .otherwise(None)
             .alias('player_1'),
             pl.when(~is_null_or_empty('player_2_name'))
             .then(pl.col('player_2_name'))
+            .when(~is_null_or_empty('player_2_displayname'))
+            .then(pl.col('player_2_displayname'))
             .when(~is_null_or_empty('player_2_template'))
             .then(pl.col('player_2_template'))
             .otherwise(None)
@@ -79,6 +85,9 @@ class Starcraft1DataPipeline(LPDBDataPipeline):
             | pl.col('player_2').str.to_lowercase().is_in(self.invalid_competitor_names)
         )
         df = self.filter_invalid(df, invalid_competitor_expr, 'invalid_competitor')
+
+        is_team_expr = pl.col('player_1').str.starts_with('Team_') | pl.col('player_2').str.starts_with('Team_')
+        df = self.filter_invalid(df, is_team_expr, 'is_team')
 
         unknown_expr = (pl.col('player_1').str.to_lowercase() == 'unknown') | (pl.col('player_2').str.to_lowercase() == 'unknown')
         df = self.filter_invalid(df, unknown_expr, 'unknown_player')
