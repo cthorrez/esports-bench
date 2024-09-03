@@ -49,11 +49,13 @@ class Starcraft1DataPipeline(LPDBDataPipeline):
         )
         df = df.with_columns(
             pl.col('player_1_struct').struct.field('name').alias('player_1_name'),
+            pl.col('player_1_struct').struct.field('match2players').list.get(0).struct.field('displayname').alias('player_1_oppname'),
             pl.col('player_1_struct').struct.field('match2players').list.get(0).struct.field('displayname').alias('player_1_displayname'),
             pl.col('player_1_struct').struct.field('template').alias('player_1_template'),
             pl.col('player_1_struct').struct.field('score').cast(pl.Float64).alias('player_1_score'),
             pl.col('player_1_struct').struct.field('status').alias('player_1_status'),
             pl.col('player_2_struct').struct.field('name').alias('player_2_name'),
+            pl.col('player_2_struct').struct.field('match2players').list.get(0).struct.field('displayname').alias('player_2_oppname'),
             pl.col('player_2_struct').struct.field('match2players').list.get(0).struct.field('displayname').alias('player_2_displayname'),
             pl.col('player_2_struct').struct.field('template').alias('player_2_template'),
             pl.col('player_2_struct').struct.field('score').cast(pl.Float64).alias('player_2_score'),
@@ -64,6 +66,8 @@ class Starcraft1DataPipeline(LPDBDataPipeline):
         df = df.with_columns(
             pl.when(~is_null_or_empty('player_1_name'))
             .then(pl.col('player_1_name'))
+            .when(~is_null_or_empty('player_1_oppname'))
+            .then(pl.col('player_1_oppname'))
             .when(~is_null_or_empty('player_1_displayname'))
             .then(pl.col('player_1_displayname'))
             .when(~is_null_or_empty('player_1_template'))
@@ -72,6 +76,8 @@ class Starcraft1DataPipeline(LPDBDataPipeline):
             .alias('player_1'),
             pl.when(~is_null_or_empty('player_2_name'))
             .then(pl.col('player_2_name'))
+            .when(~is_null_or_empty('player_2_oppname'))
+            .then(pl.col('player_2_oppname'))
             .when(~is_null_or_empty('player_2_displayname'))
             .then(pl.col('player_2_displayname'))
             .when(~is_null_or_empty('player_2_template'))
