@@ -1,0 +1,55 @@
+forecasting for rocket_league
+loaded dataset with:
+157057 rows
+30476 competitors
+dataset is split into 125528 train rows and 31529 test rows
+G2 Esports Limitless [0.87872959] [0.8628525]
+Team Falcons Gaimin Gladiators [0.89061396] [0.86151835]
+Gentle Mates Alpine Pioneers [0.64130057] [0.66351461]
+Team Vitality Team Secret [0.69043021] [0.72271962]
+Gen.G Mobil1 Racing PWR [0.60835888] [0.59063599]
+FURIA Esports OG [0.7870563] [0.77360339]
+Team BDS Oxygen Esports [0.72401658] [0.68554415]
+Spacestation Gaming Karmine Corp [0.49508347] [0.4655817]
+forecasting for dota2
+loaded dataset with:
+72845 rows
+7966 competitors
+dataset is split into 63349 train rows and 9496 test rows
+team liquid cloud9 [0.87071621] [0.61576866]
+tundra esports gaimin gladiators [0.48080088] [0.51914155]
+betboom team team falcons [0.26758539] [0.28430762]
+beastcoast heroic [0.32006198] [0.33341578]
+team spirit g2 x ig [0.7713805] [0.72715987]
+forecasting for league_of_legends
+loaded dataset with:
+129937 rows
+13569 competitors
+dataset is split into 104711 train rows and 25226 test rows
+T1 Dplus KIA [0.60984633] [0.61073011]
+KT Rolster BNK FearX [0.70687769] [0.62472198]
+forecasting for overwatch
+loaded dataset with:
+35321 rows
+8555 competitors
+dataset is split into 26211 train rows and 9110 test rows
+Team Falcons ZETA DIVISION [0.66248322] [0.60124829]
+forecasting for counterstrike
+loaded dataset with:
+199398 rows
+26326 competitors
+dataset is split into 169891 train rows and 29507 test rows
+mouz rooster [0.95082035] [0.93954594]
+big imperial esports [0.26617323] [0.36548165]
+complexity gaming m80 [0.54012518] [0.57590447]
+fnatic astralis [0.33001192] [0.324863]
+forecasting for rainbow_six
+loaded dataset with:
+67472 rows
+12689 competitors
+dataset is split into 48756 train rows and 18716 test rows
+Soniqs M80 [0.42947316] [0.42741253]
+DarkZero Esports Spacestation Gaming [0.38739644] [0.4194473]
+Luminosity Gaming Cloud9 Beastcoast [0.88907251] [0.85740059] # Only played 5 games since merging with c9
+Luminosity Gaming Beastcoast [0.1989232] [0.26789638]         # Using old beastcoast rating for pred
+Wildcard Gaming Oxygen Esports [0.5592273] [0.55331167]
