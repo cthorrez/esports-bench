@@ -86,6 +86,7 @@ class CounterStrikeDataPipeline(LPDBDataPipeline):
             ((pl.col('team_1_score') == -1) & (pl.col('team_2_score') == -1) & (pl.col('winner') == '-1'))
             | ((pl.col('team_1_score') == -1) & (pl.col('team_2_score') == -1) & (pl.col('winner') == ''))
             | ((pl.col('team_1_score') == 0) & (pl.col('team_2_score') == 0) & (pl.col('winner') == ''))
+            | (is_null_or_empty(pl.col('team_1_score')) | is_null_or_empty(pl.col('team_2_score')))
         )
         df = self.filter_invalid(df, missing_results_expr, 'missing_results')
 
@@ -116,6 +117,13 @@ class CounterStrikeDataPipeline(LPDBDataPipeline):
             .alias('competitor_2_score')
         )
 
+        missing_final_result_expr = (
+            is_null_or_empty(pl.col('outcome')) 
+            | is_null_or_empty(team_1_score_expr)
+            | is_null_or_empty(team_2_score_expr)
+        )
+        df = self.filter_invalid(df, missing_final_result_expr, 'missing_final_result')
+
         # select final columns and write to csv
         df = (
             df.select(
@@ -130,7 +138,6 @@ class CounterStrikeDataPipeline(LPDBDataPipeline):
             )
             .unique()
             .sort('date', 'match_id')
-            # .collect(streaming=True)
         )
 
         print(f'valid row count: {df.shape[0]}')
