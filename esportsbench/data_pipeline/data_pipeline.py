@@ -256,9 +256,12 @@ class LPDBDataPipeline(DataPipeline):
                 continue
             players = [participant['player'] for participant in game['participants'].values()]
             player_1, player_2 = players
-            player_1_score, player_2_score = map(float, game['scores'])
+            try:
+                player_1_score = float(game['scores'][0])
+                player_2_score = float(game['scores'][1])
+            except:
+                continue
             outcome = outcome_from_scores(player_1_score, player_2_score)
-
             outputs.append(
                 {
                     'player_1': player_1,
