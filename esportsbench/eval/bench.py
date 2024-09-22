@@ -45,7 +45,7 @@ RATING_SYSTEM_MAP = {
     # 'ork': OnlineRaoKupper,
     # 'elod': EloDavidson,
     # 'elom': EloMentum,
-    # 'yuksel': Yuksel2024,
+    'yuksel': Yuksel2024,
     # 'autograd' : AutogradRatingSystem
     'random_base' : partial(BaselineRatingSystem, mode='random'),
     'wr_base' : partial(BaselineRatingSystem, mode='win_rate'),
@@ -206,5 +206,4 @@ if __name__ == '__main__':
         hyperparameter_config=args.hyperparameter_config,
         num_processes=args.num_processes,
     )
-    json.dump(results, open('new_results.json', 'w'))
     print_results(results)
