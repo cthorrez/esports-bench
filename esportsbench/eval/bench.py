@@ -69,10 +69,12 @@ def add_mean_metrics(data_dict):
                 rating_system_counts[rating_system][metric] += 1
 
     # Calculate mean metrics for each rating system
-    mean_metrics = {
-        sys: {metric: total / rating_system_counts[sys][metric] for metric, total in metrics.items()}
-        for sys, metrics in rating_system_sums.items()
-    }
+    mean_metrics = {}
+    for sys, metrics in rating_system_sums.items():
+        mean_dict = {}
+        for metric, total in metrics.items():
+            mean_dict[metric] = total / rating_system_counts[sys][metric]
+        mean_metrics[sys] = mean_dict
 
     # Add the 'mean' key at the top level of the data_dict
     data_dict['mean'] = mean_metrics
@@ -169,7 +171,7 @@ def print_results(data_dict):
             log_loss = f"{metrics.get('log_loss', 'N/A'):.4f}".rjust(10)
             brier_score = f"{metrics.get('brier_score', 'N/A'):.4f}".rjust(12)
             duration = f"{metrics.get('duration', 'N/A'):.4f}".rjust(10)
-            print(f'{game:<18}{rating_system_name:<30}{accuracy}{log_loss}{brier_score}{duration}')
+            # print(f'{game:<18}{rating_system_name:<30}{accuracy}{log_loss}{brier_score}{duration}')
             print(f'{game:<18}{rating_system_name:<30}{accuracy_without_draws}{log_loss}{brier_score}{duration}')
 
             acc_latex_line += f' & {accuracy_without_draws}'
