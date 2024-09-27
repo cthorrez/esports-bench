@@ -28,6 +28,8 @@ def main():
         ('PSG Talon', 'PaiN Gaming'),
         ('GAM Esports', 'Fukuoka SoftBank HAWKS gaming'),
         ('100 Thieves', 'Movistar R7'),
+        ('MAD Lions KOI', 'PSG Talon'),
+        ('Fukuoka SoftBank HAWKS gaming', '100 Thieves'),
     ]
 
 
