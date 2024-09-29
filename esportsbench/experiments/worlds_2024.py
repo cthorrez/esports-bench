@@ -18,8 +18,15 @@ teams = [
     'GAM Esports',
     'Fukuoka SoftBank HAWKS gaming',
     '100 Thieves',
-    'Movistar R7'
-
+    'Movistar R7',
+    'Hanwha Life Esports',
+    'T1',
+    'Bilibili Gaming',
+    'G2 Esports',
+    'FlyQuest',
+    'Gen.G',
+    'Top Esports',
+    'Fnatic',
 ]
 
 def main():
@@ -30,6 +37,10 @@ def main():
         ('100 Thieves', 'Movistar R7'),
         ('MAD Lions KOI', 'PSG Talon'),
         ('Fukuoka SoftBank HAWKS gaming', '100 Thieves'),
+        ('GAM Esports', 'Movistar R7'),
+        ('Vikings Esports (2023 Vietnamese Team)', 'PaiN Gaming'),
+        ('Movistar R7', 'PaiN Gaming'),
+        ('PSG Talon', '100 Thieves'),
     ]
 
 
