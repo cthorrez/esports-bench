@@ -27,20 +27,45 @@ teams = [
     'Gen.G',
     'Top Esports',
     'Fnatic',
+    'Weibo Gaming',
+    'Dplus KIA',
+    'Team Liquid',
+    'LNG Esports'
 ]
 
 def main():
     matches = [
-        ('MAD Lions KOI', 'Vikings Esports (2023 Vietnamese Team)'),
-        ('PSG Talon', 'PaiN Gaming'),
-        ('GAM Esports', 'Fukuoka SoftBank HAWKS gaming'),
-        ('100 Thieves', 'Movistar R7'),
-        ('MAD Lions KOI', 'PSG Talon'),
-        ('Fukuoka SoftBank HAWKS gaming', '100 Thieves'),
-        ('GAM Esports', 'Movistar R7'),
-        ('Vikings Esports (2023 Vietnamese Team)', 'PaiN Gaming'),
-        ('Movistar R7', 'PaiN Gaming'),
-        ('PSG Talon', '100 Thieves'),
+        # play in
+        # ('MAD Lions KOI', 'Vikings Esports (2023 Vietnamese Team)'),
+        # ('PSG Talon', 'PaiN Gaming'),
+        # ('GAM Esports', 'Fukuoka SoftBank HAWKS gaming'),
+        # ('100 Thieves', 'Movistar R7'),
+        # ('MAD Lions KOI', 'PSG Talon'),
+        # ('Fukuoka SoftBank HAWKS gaming', '100 Thieves'),
+        # ('GAM Esports', 'Movistar R7'),
+        # ('Vikings Esports (2023 Vietnamese Team)', 'PaiN Gaming'),
+        # ('Movistar R7', 'PaiN Gaming'),
+        # ('PSG Talon', '100 Thieves'),
+
+        # swiss round 1
+        # ('Bilibili Gaming', 'MAD Lions KOI'),
+        # ('Top Esports', 'T1'),
+        # ('Gen.G', 'Weibo Gaming'),
+        # ('Fnatic', 'Dplus KIA'),
+        # ('Team Liquid', 'LNG Esports'),
+        # ('Hanwha Life Esports', 'PSG Talon'),
+        # ('FlyQuest', 'GAM Esports'),
+        # ('G2 Esports', 'PaiN Gaming'),
+
+        # swiss round 2
+        ('Bilibili Gaming', 'LNG Esports'),
+        ('Gen.G', 'Top Esports',),
+        ('G2 Esports', 'Hanwha Life Esports'),
+        ('Weibo Gaming', 'Team Liquid'),
+        ('T1', 'PaiN Gaming'),
+        ('Dplus KIA', 'FlyQuest'),
+        ('Fnatic', 'GAM Esports'),
+        ('PSG Talon', 'MAD Lions KOI'),
     ]
 
 
