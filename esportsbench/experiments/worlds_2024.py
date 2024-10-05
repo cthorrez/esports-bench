@@ -58,14 +58,24 @@ def main():
         # ('G2 Esports', 'PaiN Gaming'),
 
         # swiss round 2
-        ('Bilibili Gaming', 'LNG Esports'),
-        ('Gen.G', 'Top Esports',),
-        ('G2 Esports', 'Hanwha Life Esports'),
-        ('Weibo Gaming', 'Team Liquid'),
-        ('T1', 'PaiN Gaming'),
-        ('Dplus KIA', 'FlyQuest'),
-        ('Fnatic', 'GAM Esports'),
-        ('PSG Talon', 'MAD Lions KOI'),
+        # ('Bilibili Gaming', 'LNG Esports'),
+        # ('Gen.G', 'Top Esports',),
+        # ('G2 Esports', 'Hanwha Life Esports'),
+        # ('Weibo Gaming', 'Team Liquid'),
+        # ('T1', 'PaiN Gaming'),
+        # ('Dplus KIA', 'FlyQuest'),
+        # ('Fnatic', 'GAM Esports'),
+        # ('PSG Talon', 'MAD Lions KOI'),
+
+        # swiss round 3
+        ('Dplus KIA', 'LNG Esports'),
+        ('Hanwha Life Esports', 'Gen.G'),
+        ('Top Esports', 'Fnatic'),
+        ('Bilibili Gaming', 'T1'),
+        ('PSG Talon', 'FlyQuest'),
+        ('Weibo Gaming', 'G2 Esports'),
+        ('MAD Lions KOI', 'GAM Esports'),
+        ('PaiN Gaming', 'Team Liquid'),
     ]
 
 
