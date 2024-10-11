@@ -78,8 +78,10 @@ def main():
         # ('PaiN Gaming', 'Team Liquid'),
 
         # swiss round 4
-        ('Dplus KIA', 'Top Esports'),
-        ('Hanwha Life Esports', 'FlyQuest'),
+        # ('Dplus KIA', 'Top Esports'),
+        # ('Hanwha Life Esports', 'FlyQuest'),
+        ('G2 Esports', 'T1'),
+        ('Bilibili Gaming', 'PSG Talon'),
     ]
 
 
