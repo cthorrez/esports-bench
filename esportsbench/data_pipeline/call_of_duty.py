@@ -80,6 +80,13 @@ class CallOfDutyDataPipeline(LPDBDataPipeline):
         )
         df = self.filter_invalid(df, invalid_competitor_expr, 'invalid_competitor')
 
+        two_v_two_expr = (
+            pl.col('pagename').str.to_lowercase().str.contains('2v2')
+            | pl.col('team_1').str.contains(r'\s&\s')
+            | pl.col('team_2').str.contains(r'\s&\s')
+        )
+        df = self.filter_invalid(df, two_v_two_expr, 'two_v_two')
+
         df = df.with_columns(
             pl.when(pl.col('team_1_score') > pl.col('team_2_score'))
             .then(1.0)

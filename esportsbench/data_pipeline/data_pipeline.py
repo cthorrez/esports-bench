@@ -113,7 +113,7 @@ class DataPipeline(ABC):
                 response = sess.send(request, force_refresh=force_refresh)
                 processed_rows, is_done = self.process_response(response)
 
-                if cache_has_key and is_done:
+                if (cache_has_key and is_done):
                     print(f'response had less than {self.rows_per_request} rows, retrying with force_refresh=True')
                     self.waiter.wait()
                     response = sess.send(request, force_refresh=True)
