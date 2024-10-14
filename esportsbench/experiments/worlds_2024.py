@@ -80,8 +80,19 @@ def main():
         # swiss round 4
         # ('Dplus KIA', 'Top Esports'),
         # ('Hanwha Life Esports', 'FlyQuest'),
-        ('G2 Esports', 'T1'),
-        ('Bilibili Gaming', 'PSG Talon'),
+        # ('G2 Esports', 'T1'),
+        # ('Bilibili Gaming', 'PSG Talon'),
+        # ('Weibo Gaming', 'Fnatic'),
+        # ('Team Liquid', 'GAM Esports'),
+        # ('Dplus KIA', 'Weibo Gaming'),
+        # ('G2 Esports', 'Bilibili Gaming'),
+        # ('FlyQuest', 'Team Liquid'),
+
+        # Quarterfinals
+        ('LNG Esports', 'Weibo Gaming'),
+        ('Hanwha Life Esports', 'Bilibili Gaming'),
+        ('Top Esports', 'T1'),
+        ('Gen.G', 'FlyQuest'),
     ]
 
 
