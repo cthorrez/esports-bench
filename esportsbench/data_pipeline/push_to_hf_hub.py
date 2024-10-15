@@ -20,7 +20,6 @@ def preprocess_function(example):
     
 
 def main(version, tag=None, prod=False):
-
     features = Features({
         'date': Value('date32'),
         'competitor_1': Value('string'),
@@ -47,7 +46,7 @@ def main(version, tag=None, prod=False):
         repo_id = 'EsportsBench/EsportsBench'
 
     dataset.push_to_hub(
-        "cthorrez/EsportsBenchTest",
+        repo_id,
         commit_message=f'update to {version}',
     )
     print('Dataset pushed to hub.')

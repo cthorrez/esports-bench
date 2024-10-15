@@ -21,14 +21,13 @@ def postprocess(train_end_date, test_end_date, min_rows_year, version):
         print(f'num total matches: {len(df)}')
         first_date = df.select('date').min().item()[:10]
         last_date = df.select('date').max().item()[:10]
-        print(f'date range: {first_date} to {last_date}')
+        print(f'input date range: {first_date} to {last_date}')
 
         comp_1_error = df.select('competitor_1').filter(pl.col('competitor_1').str.contains('<div class="error">')).count().item()
         comp_2_error = df.select('competitor_2').filter(pl.col('competitor_2').str.contains('<div class="error">')).count().item()
 
         print(f'comp_1 error count: {comp_1_error}')
         print(f'comp_2 error count: {comp_2_error}')
-
 
         df = df.with_columns(pl.col('date').str.to_datetime().alias('date'))
         df = df.with_columns(pl.col('date').dt.year().alias('year'))
@@ -37,7 +36,6 @@ def postprocess(train_end_date, test_end_date, min_rows_year, version):
             pl.col('len') >= min_rows_year
         ).select('year').min().item()
         print(f'first year with at least {min_rows_year} rows: {first_valid_year}')
-        # print(year_counts)
         df = df.with_columns(
             pl.col('date').dt.date().cast(pl.Utf8).alias('date')
         )
@@ -59,6 +57,9 @@ def postprocess(train_end_date, test_end_date, min_rows_year, version):
         draw_rate = df.select(pl.col('outcome')== 0.5).mean().item()
         print(f'Draw rate: {draw_rate}')
         print(f'mean outcome: {df.select("outcome").mean().item()}')
+        first_date = df.select('date').min().item()[:10]
+        last_date = df.select('date').max().item()[:10]
+        print(f'output date range: {first_date} to {last_date}')
 
         train_df = df.filter(
             (pl.col('date') <= train_end_date)
