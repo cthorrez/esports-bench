@@ -89,10 +89,14 @@ def main():
         # ('FlyQuest', 'Team Liquid'),
 
         # Quarterfinals
-        ('LNG Esports', 'Weibo Gaming'),
-        ('Hanwha Life Esports', 'Bilibili Gaming'),
-        ('Top Esports', 'T1'),
-        ('Gen.G', 'FlyQuest'),
+        # ('LNG Esports', 'Weibo Gaming'),
+        # ('Hanwha Life Esports', 'Bilibili Gaming'),
+        # ('Top Esports', 'T1'),
+        # ('Gen.G', 'FlyQuest'),
+
+        # Semifinals
+        ('Weibo Gaming', 'Bilibili Gaming'),
+        ('T1', 'Gen.G')
     ]
 
 
@@ -118,8 +122,13 @@ def main():
         model.fit_dataset(dataset)
         models[model_name] = model
 
-    for team in teams:
-        print(f'{team} Elo: {models["elo"].ratings[dataset.competitor_to_idx[team]]}')
+    mus = [models['trueskill'].mus[dataset.competitor_to_idx[team]] for team in teams]
+    sigma2s = [models['trueskill'].sigma2s[dataset.competitor_to_idx[team]] for team in teams]
+    idxs = np.argsort(-np.array(mus))
+    for idx in idxs:
+        mu     = mus[idx]
+        sigma2 = sigma2s[idx]
+        print(f'{teams[idx]:<20} mu: {mu:6.2f}, sigma2: {sigma2:6.2f}')
 
 
 
