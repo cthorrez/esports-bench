@@ -5,11 +5,11 @@ from datasets import load_dataset
 
 DATA_DIR = pathlib.Path(__file__).parents[2] / 'data'
 
-def main(destination):
+def main(destination, revision):
     os.makedirs(DATA_DIR / destination, exist_ok=True)
     dataset = load_dataset(
         'EsportsBench/EsportsBench',
-        revision='1.0'
+        revision=revision
     )
     dataset.set_format('pandas')
     for split in dataset:
@@ -18,5 +18,7 @@ def main(destination):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--dest', required=False, default='hf_data')
+    parser.add_argument('-r', '--revision', required=False, default='1.0')
     args = parser.parse_args()
-    main(args.dest)
+    dest = args.dest + f'_{int(float(args.revision))}'
+    main(dest, args.revision)

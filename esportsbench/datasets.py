@@ -1,7 +1,7 @@
 """module for managing esports datasets for rating system experiments"""
 import pathlib
 import numpy as np
-import pandas as pd
+import polars as pl
 from riix.utils.data_utils import MatchupDataset
 from esportsbench.constants import GAME_NAME_MAP
 
@@ -20,11 +20,11 @@ def load_dataset(
     # map short name to full name if short name is provided
     if game in GAME_NAME_MAP:
         game = GAME_NAME_MAP[game]
-    df = pd.read_csv(BASE_DATA_DIR / data_dir / f'{game}.csv')
+    df = pl.read_csv(BASE_DATA_DIR / data_dir / f'{game}.csv')
     if drop_draws:
-        df = df[df['outcome'] != 0.5].reset_index()
+        df = df.filter(pl.col('outcome') != 0.5)
     if max_rows:
-        df = df.head(max_rows).reset_index()
+        df = df.head(max_rows)
     train_mask = df['date'] <= train_end_date
     test_mask = (df['date'] > train_end_date) & (df['date'] <= test_end_date)
     train_rows = int(train_mask.sum())
@@ -35,12 +35,8 @@ def load_dataset(
         outcome_col='outcome',
         datetime_col='date',
         rating_period=rating_period,
-        verbose=False
+        verbose=True
     )[:train_rows + test_rows]
-
-    print('loaded dataset with:')
-    print(f'{train_rows + test_rows} rows')
-    print(f'{dataset.num_competitors} competitors')
     print(f'dataset is split into {train_rows} train rows and {test_rows} test rows')
     final_test_mask = np.arange(train_rows + test_rows) >= train_rows
     return dataset, final_test_mask

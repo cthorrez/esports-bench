@@ -21,7 +21,7 @@ dependencies = [
     "matplotlib",
     "datasets",
     "hydra-core",
-    "riix==0.0.3"
+    "riix==0.0.6"
 ]
 
 [tool.ruff]
