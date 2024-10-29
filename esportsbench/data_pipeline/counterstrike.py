@@ -25,17 +25,16 @@ class CounterStrikeDataPipeline(LPDBDataPipeline):
 
         df = pl.scan_ndjson(
             self.raw_data_dir / 'counterstrike.jsonl',
-            infer_schema_length=100,
+            infer_schema_length=100000,
             low_memory=True,
             ignore_errors=True,
         )
-
         print('filtering invalid dates')
-        df = self.filter_invalid(df, invalid_date_expr, 'invalid_date', drop_cols=['match2opponents'])
-
-        # filter out matches without exactly 2 teams
-        not_two_teams_expr = pl.col('match2opponents').list.len() != 2
-        df = self.filter_invalid(df, not_two_teams_expr, 'not_two_teams', drop_cols=['match2opponents'])
+        df = self.filter_invalid(df, invalid_date_expr, 'invalid_date')
+       
+        # # filter out matches without exactly 2 teams
+        # not_two_teams_expr = pl.col('match2opponents').list.len() != 2
+        # df = self.filter_invalid(df, not_two_teams_expr, 'not_two_teams', drop_cols=['match2opponents'])
 
         # extract team names and scores
         df = df.with_columns(
@@ -53,7 +52,7 @@ class CounterStrikeDataPipeline(LPDBDataPipeline):
             pl.col('team_2_struct').struct.field('teamtemplate').struct.field('name').alias('team_2_template_name'),
             pl.col('team_2_struct').struct.field('teamtemplate').struct.field('page').alias('team_2_template_page'),
             pl.col('team_2_struct').struct.field('score').cast(pl.Float64).alias('team_2_score'),
-        ).drop('team_1_struct', 'team_2_struct')
+        ).drop('team_1_struct', 'team_2_struct').collect()
 
         # use name if it is not null, use template otherwise
         df = df.with_columns(
@@ -87,6 +86,7 @@ class CounterStrikeDataPipeline(LPDBDataPipeline):
             ((pl.col('team_1_score') == -1) & (pl.col('team_2_score') == -1) & (pl.col('winner') == '-1'))
             | ((pl.col('team_1_score') == -1) & (pl.col('team_2_score') == -1) & (pl.col('winner') == ''))
             | ((pl.col('team_1_score') == 0) & (pl.col('team_2_score') == 0) & (pl.col('winner') == ''))
+            | (is_null_or_empty(pl.col('team_1_score')) | is_null_or_empty(pl.col('team_2_score')))
         )
         df = self.filter_invalid(df, missing_results_expr, 'missing_results')
 
@@ -117,6 +117,13 @@ class CounterStrikeDataPipeline(LPDBDataPipeline):
             .alias('competitor_2_score')
         )
 
+        missing_final_result_expr = (
+            is_null_or_empty(pl.col('outcome')) 
+            | is_null_or_empty(team_1_score_expr)
+            | is_null_or_empty(team_2_score_expr)
+        )
+        df = self.filter_invalid(df, missing_final_result_expr, 'missing_final_result')
+
         # select final columns and write to csv
         df = (
             df.select(
@@ -131,7 +138,6 @@ class CounterStrikeDataPipeline(LPDBDataPipeline):
             )
             .unique()
             .sort('date', 'match_id')
-            .collect(streaming=True)
         )
 
         print(f'valid row count: {df.shape[0]}')

@@ -13,6 +13,7 @@ import polars as pl
 from requests import Request, Response
 from requests_cache import CachedSession
 from dotenv import load_dotenv
+from esportsbench.utils import is_null_or_empty, outcome_from_scores
 
 
 def print_request(request):
@@ -112,7 +113,7 @@ class DataPipeline(ABC):
                 response = sess.send(request, force_refresh=force_refresh)
                 processed_rows, is_done = self.process_response(response)
 
-                if cache_has_key and is_done:
+                if (cache_has_key and is_done):
                     print(f'response had less than {self.rows_per_request} rows, retrying with force_refresh=True')
                     self.waiter.wait()
                     response = sess.send(request, force_refresh=True)
@@ -127,6 +128,11 @@ class DataPipeline(ABC):
                         for key, value in self.schema_overrides.items():
                             if key in row:
                                 row[key] = value(row[key])
+                    # HACKY HACKY HACK
+                    if ('match2opponents' in row):
+                        for opp in row['match2opponents']:
+                            if ('extradata' in opp) and (opp['extradata'] == []):
+                                opp['extradata'] = None
                     out_file.write(json.dumps(row) + '\n')
                 out_file.flush()
                 if num_rows >= self.max_rows:
@@ -232,3 +238,78 @@ class LPDBDataPipeline(DataPipeline):
             results = response_json['result']
             is_done = len(results) < self.rows_per_request
         return results, is_done
+    
+    @staticmethod
+    def unpack_team_match(raw_games):
+        if raw_games == '[]':
+            return None
+        games = json.loads(raw_games)
+        outputs = []
+        for idx, game in enumerate(games):
+            if game['mode'] == '2v2':
+                continue
+            if game['participants'] == []:
+                continue
+            if len(game['participants']) != 2:
+                continue
+            if len(game['scores']) != 2:
+                continue
+            players = [participant['player'] for participant in game['participants'].values()]
+            player_1, player_2 = players
+            try:
+                player_1_score = float(game['scores'][0])
+                player_2_score = float(game['scores'][1])
+            except:
+                continue
+            outcome = outcome_from_scores(player_1_score, player_2_score)
+            outputs.append(
+                {
+                    'player_1': player_1,
+                    'player_2': player_2,
+                    'player_1_score': float(player_1_score),
+                    'player_2_score': float(player_2_score),
+                    'outcome': outcome,
+                    'game_idx': idx,
+                    'bestof': 1,
+                }
+            )
+        return outputs
+
+    def unpack_team_matches(self, team_df):
+
+        team_match_struct = pl.Struct([
+            pl.Field("player_1", pl.Utf8),
+            pl.Field("player_2", pl.Utf8),
+            pl.Field("player_1_score", pl.Float64),
+            pl.Field("player_2_score", pl.Float64),
+            pl.Field("outcome", pl.Float64),
+            pl.Field("game_idx", pl.Int64),
+            pl.Field("bestof", pl.Int64)
+        ])
+
+        team_df = team_df.with_columns(
+            pl.col('match2games').map_elements(
+                function=self.unpack_team_match,
+                skip_nulls=True,
+                return_dtype=pl.List(team_match_struct)
+            ).alias('games')
+        )
+
+        games_df = team_df.explode('games').unnest('games')
+        bad_team_game_expr = (
+            is_null_or_empty(pl.col('player_1'))
+            | is_null_or_empty(pl.col('player_2'))
+            | is_null_or_empty(pl.col('player_1_score'))
+            | is_null_or_empty(pl.col('player_2_score'))
+            | (pl.col('player_1_score') == -1)
+            | (pl.col('player_2_score') == -1)
+        )
+        games_df = self.filter_invalid(games_df, bad_team_game_expr, 'bad_team_game')
+
+        games_df = games_df.with_columns(
+            pl.col('player_1_score').cast(pl.Float64).alias('player_1_score'),
+            pl.col('player_2_score').cast(pl.Float64).alias('player_2_score'),
+            pl.concat_str([pl.col('match2id'), pl.col('game_idx').cast(pl.Utf8)], separator='_').alias('match2id'),
+        )
+
+        return games_df

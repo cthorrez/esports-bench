@@ -98,3 +98,8 @@ wr_win:
 wr_appearance:
   prior:
     lower_bound: 1.0e-6
+
+yuksel:
+  scaling_factor:
+    lower_bound: 1.0e-6
+    upper_bound: 1.0

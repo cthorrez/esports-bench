@@ -8,7 +8,7 @@ from esportsbench.constants import GAME_NAME_MAP
 pl.Config.set_tbl_rows(100)
 
 
-def postprocess(train_end_date, test_end_date, min_rows_year):
+def postprocess(train_end_date, test_end_date, min_rows_year, version):
     data_dir = pathlib.Path(__file__).resolve().parents[2] / 'data'
     input_file_paths = sorted(data_dir.glob('full_data/*'))
     print('')
@@ -21,7 +21,7 @@ def postprocess(train_end_date, test_end_date, min_rows_year):
         print(f'num total matches: {len(df)}')
         first_date = df.select('date').min().item()[:10]
         last_date = df.select('date').max().item()[:10]
-        print(f'date range: {first_date} to {last_date}')
+        print(f'input date range: {first_date} to {last_date}')
 
         comp_1_error = df.select('competitor_1').filter(pl.col('competitor_1').str.contains('<div class="error">')).count().item()
         comp_2_error = df.select('competitor_2').filter(pl.col('competitor_2').str.contains('<div class="error">')).count().item()
@@ -29,15 +29,13 @@ def postprocess(train_end_date, test_end_date, min_rows_year):
         print(f'comp_1 error count: {comp_1_error}')
         print(f'comp_2 error count: {comp_2_error}')
 
-
         df = df.with_columns(pl.col('date').str.to_datetime().alias('date'))
         df = df.with_columns(pl.col('date').dt.year().alias('year'))
-        year_counts = df.group_by('year').count().sort('year')
+        year_counts = df.group_by('year').len().sort('year')
         first_valid_year = year_counts.filter(
-            pl.col('count') >= min_rows_year
+            pl.col('len') >= min_rows_year
         ).select('year').min().item()
         print(f'first year with at least {min_rows_year} rows: {first_valid_year}')
-        # print(year_counts)
         df = df.with_columns(
             pl.col('date').dt.date().cast(pl.Utf8).alias('date')
         )
@@ -59,6 +57,9 @@ def postprocess(train_end_date, test_end_date, min_rows_year):
         draw_rate = df.select(pl.col('outcome')== 0.5).mean().item()
         print(f'Draw rate: {draw_rate}')
         print(f'mean outcome: {df.select("outcome").mean().item()}')
+        first_date = df.select('date').min().item()[:10]
+        last_date = df.select('date').max().item()[:10]
+        print(f'output date range: {first_date} to {last_date}')
 
         train_df = df.filter(
             (pl.col('date') <= train_end_date)
@@ -71,8 +72,8 @@ def postprocess(train_end_date, test_end_date, min_rows_year):
         print(f'num train rows: {len(train_df)}')
         print(f'num test rows: {len(test_df)}')
 
-
-        output_file_path = data_dir / 'final_data' / input_file_path.name
+        os.makedirs(data_dir / f'final_data_v{version}', exist_ok=True)
+        output_file_path = data_dir / f'final_data_v{version}' / input_file_path.name
         df.drop('year').write_csv(output_file_path)
 
         print('======================================================')
@@ -80,8 +81,9 @@ def postprocess(train_end_date, test_end_date, min_rows_year):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--train_end_date', type=str, default='2023-06-30', help='inclusive end date for test set')
-    parser.add_argument('--test_end_date', type=str, default='2024-06-30', help='inclusive end date for test set')
+    parser.add_argument('--train_end_date', type=str, default='2023-09-30', help='inclusive end date for test set')
+    parser.add_argument('--test_end_date', type=str, default='2024-09-30', help='inclusive end date for test set')
     parser.add_argument('--min_rows_year', type=int, default=100, help='minmum number of rows in a year to begin including data')
+    parser.add_argument('--version', '-v', type=str, default='3', help='which version of the dataset')
     args = vars(parser.parse_args())
     postprocess(**args)

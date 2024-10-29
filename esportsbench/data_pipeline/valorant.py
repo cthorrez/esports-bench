@@ -76,8 +76,9 @@ class ValorantDataPipeline(LPDBDataPipeline):
         df = self.filter_invalid(df, missing_team_expr, 'missing_team')
 
         missing_results_expr = (
-            (pl.col('team_1_score') == -1) & (pl.col('team_2_score') == -1) & (pl.col('winner') == '')
-        ) | ((pl.col('team_1_score') == 0) & (pl.col('team_2_score') == 0) & (pl.col('winner') == ''))
+            ((pl.col('team_1_score') == -1) & (pl.col('team_2_score') == -1) & (is_null_or_empty('winner') | (pl.col('winner') == '0')))
+            | ((pl.col('team_1_score') == 0) & (pl.col('team_2_score') == 0) & (is_null_or_empty('winner') | (pl.col('winner') == '0')))
+        )
         df = self.filter_invalid(df, missing_results_expr, 'missing_results')
 
         # logic for outcome column

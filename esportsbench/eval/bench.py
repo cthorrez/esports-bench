@@ -45,7 +45,7 @@ RATING_SYSTEM_MAP = {
     # 'ork': OnlineRaoKupper,
     # 'elod': EloDavidson,
     # 'elom': EloMentum,
-    # 'yuksel': Yuksel2024,
+    'yuksel': Yuksel2024,
     # 'autograd' : AutogradRatingSystem
     'random_base' : partial(BaselineRatingSystem, mode='random'),
     'wr_base' : partial(BaselineRatingSystem, mode='win_rate'),
@@ -69,10 +69,12 @@ def add_mean_metrics(data_dict):
                 rating_system_counts[rating_system][metric] += 1
 
     # Calculate mean metrics for each rating system
-    mean_metrics = {
-        sys: {metric: total / rating_system_counts[sys][metric] for metric, total in metrics.items()}
-        for sys, metrics in rating_system_sums.items()
-    }
+    mean_metrics = {}
+    for sys, metrics in rating_system_sums.items():
+        mean_dict = {}
+        for metric, total in metrics.items():
+            mean_dict[metric] = total / rating_system_counts[sys][metric]
+        mean_metrics[sys] = mean_dict
 
     # Add the 'mean' key at the top level of the data_dict
     data_dict['mean'] = mean_metrics
@@ -158,10 +160,10 @@ def print_results(data_dict):
     print(header_line)
     print('=' * len(header_line))
 
+    filler = '                                 '
     for game, rating_systems in data_dict.items():
-        acc_latex_line = f'{game} & accuracy'
-        ll_latex_line =f'{game} & log loss'
-        # for rating_system_name in rating_system_names:
+        acc_latex_line = f'{game} & Accuracy'
+        ll_latex_line =f'{filler} & Log Loss'
         for rating_system_name in rating_systems.keys():
             metrics = rating_systems[rating_system_name]
             accuracy = f"{metrics.get('accuracy', 'N/A'):.4f}".rjust(10)

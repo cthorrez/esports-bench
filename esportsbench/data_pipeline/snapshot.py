@@ -13,7 +13,7 @@ def make_snapshot_for_file(file_path):
     df = pl.read_csv(file_path)
     game_snapshot = df.select(
         pl.lit(game_name).alias('game_name'),
-        pl.count().cast(pl.Int32).alias('num_matches'),
+        pl.len().cast(pl.Int32).alias('num_matches'),
         pl.concat([pl.col('competitor_1'), pl.col('competitor_2')]).unique().count().cast(pl.Int32).alias('num_competitors'),
         pl.col('date').min().alias('first_date'),
         pl.col('date').max().alias('last_date'),
