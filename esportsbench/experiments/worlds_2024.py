@@ -95,8 +95,11 @@ def main():
         # ('Gen.G', 'FlyQuest'),
 
         # Semifinals
-        ('Weibo Gaming', 'Bilibili Gaming'),
-        ('T1', 'Gen.G')
+        # ('Weibo Gaming', 'Bilibili Gaming'),
+        # ('T1', 'Gen.G')
+
+        # Finals
+        ()
     ]
 
 

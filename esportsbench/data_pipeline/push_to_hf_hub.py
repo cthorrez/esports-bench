@@ -13,10 +13,9 @@ def main(version, tag=None, prod=False):
         'match_id': Value('string'),
         'page': Value('string'),
     })
-    gs = [g for g in GAME_NAMES if 'dota2' not in g]
     dataset = load_dataset(
-        path=f'../../data/final_data_v{version}/parquet',
-        data_files= {game_name: f'{game_name}.parquet' for game_name in gs},
+        path=f'../../data/final_data_v{version.replace(".", "_")}/parquet',
+        data_files= {game_name: f'{game_name}.parquet' for game_name in GAME_NAMES},
         features=features,
     )
     print('Dataset loaded.')
@@ -30,17 +29,13 @@ def main(version, tag=None, prod=False):
     dataset.push_to_hub(
         repo_id,
         commit_message=f'update to {version}',
-        revision=version.replace('_', '.')
     )
     print('Dataset pushed to hub.')
-    if tag is not None:
-        huggingface_hub.create_tag(repo_id=repo_id, tag=tag, repo_type="dataset")
-        print('Tag applied')
+    huggingface_hub.create_tag(repo_id=repo_id, tag=version, repo_type="dataset")
+    print('Tag applied')
     
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--version', '-v', type=str, default='3_1')
-    parser.add_argument('--tag', default=None, required=False)
+    parser.add_argument('--version', '-v', type=str, default='3.1')
     parser.add_argument('--prod', action='store_true')
     main(**vars(parser.parse_args()))
