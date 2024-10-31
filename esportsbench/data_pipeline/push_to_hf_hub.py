@@ -25,11 +25,12 @@ def main(version, tag=None, prod=False):
     repo_id = 'cthorrez/EsportsBenchTest'
     if prod:
         repo_id = 'EsportsBench/EsportsBench'
-
+        
     dataset.push_to_hub(
         repo_id,
         commit_message=f'update to {version}',
     )
+
     print('Dataset pushed to hub.')
     huggingface_hub.create_tag(repo_id=repo_id, tag=version, repo_type="dataset")
     print('Tag applied')

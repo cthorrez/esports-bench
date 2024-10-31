@@ -45,7 +45,7 @@ RATING_SYSTEM_MAP = {
     # 'ork': OnlineRaoKupper,
     # 'elod': EloDavidson,
     # 'elom': EloMentum,
-    'yuksel': Yuksel2024,
+    # 'yuksel': Yuksel2024,
     # 'autograd' : AutogradRatingSystem
     'random_base' : partial(BaselineRatingSystem, mode='random'),
     'wr_base' : partial(BaselineRatingSystem, mode='win_rate'),
@@ -107,6 +107,7 @@ def run_benchmark(
     def eval_iterator():
         for game_short_name in games:
             game_name = GAME_NAME_MAP[game_short_name]
+            print(game_name)
             dataset, test_mask = load_dataset(
                 game=game_name,
                 rating_period=rating_period,
@@ -142,7 +143,6 @@ def run_benchmark(
                     
                 yield (game_name, rating_system_name, dataset, rating_system_class, params, test_mask)
             
-                
     pool = multiprocessing.Pool(processes=num_processes)
     eval_results = pool.imap(eval_func, eval_iterator())
     for game_name, rating_system_name, metrics in eval_results:
@@ -192,7 +192,7 @@ if __name__ == '__main__':
     parser.add_argument('-rp', '--rating_period', type=str, required=False, default='7D')
     parser.add_argument('--train_end_date', type=str, default='2023-03-31', help='inclusive end date for test set')
     parser.add_argument('--test_end_date', type=str, default='2024-03-31', help='inclusive end date for test set')
-    parser.add_argument('-d', '--data_dir', type=str, default='hf_data')
+    parser.add_argument('-d', '--data_dir', type=str, default='hf_data/v1_0')
     parser.add_argument('-c', '--hyperparameter_config', type=str, required=False, default='default')
     parser.add_argument('-np', '--num_processes', type=int, default=8)
     args = parser.parse_args()

@@ -99,7 +99,7 @@ def main():
         # ('T1', 'Gen.G')
 
         # Finals
-        ()
+        ('Bilibili Gaming', 'T1')
     ]
 
 

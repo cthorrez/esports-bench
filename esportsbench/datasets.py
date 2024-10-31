@@ -20,13 +20,13 @@ def load_dataset(
     # map short name to full name if short name is provided
     if game in GAME_NAME_MAP:
         game = GAME_NAME_MAP[game]
-    df = pl.read_csv(BASE_DATA_DIR / data_dir / f'{game}.csv')
+    df = pl.read_parquet(BASE_DATA_DIR / data_dir / f'parquet/{game}.parquet')
     if drop_draws:
         df = df.filter(pl.col('outcome') != 0.5)
     if max_rows:
         df = df.head(max_rows)
-    train_mask = df['date'] <= train_end_date
-    test_mask = (df['date'] > train_end_date) & (df['date'] <= test_end_date)
+    train_mask = df['date'].cast(pl.Utf8) <= train_end_date
+    test_mask = (df['date'].cast(pl.Utf8) > train_end_date) & (df['date'].cast(pl.Utf8) <= test_end_date)
     train_rows = int(train_mask.sum())
     test_rows = int(test_mask.sum())
     dataset = MatchupDataset(
@@ -36,7 +36,8 @@ def load_dataset(
         datetime_col='date',
         rating_period=rating_period,
         verbose=True
-    )[:train_rows + test_rows]
+    )
+    dataset = dataset[:train_rows + test_rows]
     print(f'dataset is split into {train_rows} train rows and {test_rows} test rows')
     final_test_mask = np.arange(train_rows + test_rows) >= train_rows
     return dataset, final_test_mask
