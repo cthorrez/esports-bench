@@ -9,8 +9,8 @@ DATA_DIR = pathlib.Path(__file__).parents[2] / 'data'
 SNAPSHOT_DIR = DATA_DIR / 'snapshots'
 
 def make_snapshot_for_file(file_path):
-    game_name = file_path.split('/')[-1].removesuffix('.csv')
-    df = pl.read_csv(file_path)
+    game_name = file_path.split('/')[-1].removesuffix('.parquet')
+    df = pl.read_parquet(file_path)
     game_snapshot = df.select(
         pl.lit(game_name).alias('game_name'),
         pl.len().cast(pl.Int32).alias('num_matches'),
@@ -24,7 +24,7 @@ def make_snapshot_for_file(file_path):
 def make_snapshot(write=False):
     name = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     game_snapshots = []
-    for file in glob.glob(f'{DATA_DIR}/full_data/*.csv'):
+    for file in glob.glob(f'{DATA_DIR}/full_data/parquet/*.parquet'):
         game_snapshot = make_snapshot_for_file(file)
         game_snapshots.append(game_snapshot)
     snapshot = pl.concat(game_snapshots)

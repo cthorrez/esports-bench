@@ -72,11 +72,11 @@ class DataPipeline(ABC):
         self.raw_data_dir = data_dir / 'raw_data'
         self.invalid_data_dir = data_dir / 'invalid_data' / self.game
         self.full_data_dir = data_dir / 'full_data'
-        self.full_data_path = self.full_data_dir / f'{self.game}.csv'
         os.makedirs(data_dir, exist_ok=True)
         os.makedirs(self.raw_data_dir, exist_ok=True)
         os.makedirs(self.invalid_data_dir, exist_ok=True)
-        os.makedirs(self.full_data_dir, exist_ok=True)
+        os.makedirs(self.full_data_dir / 'csv', exist_ok=True)
+        os.makedirs(self.full_data_dir / 'parquet', exist_ok=True) 
 
         cache_dir = data_dir / 'requests_cache'
         os.makedirs(cache_dir, exist_ok=True)
@@ -143,7 +143,13 @@ class DataPipeline(ABC):
         sess.close()
         print(f'wrote {num_rows} to {output_path}')
 
-    def process_data(self):
+    def process_and_write(self):
+        df = self.process_data()
+        print(f'{self.game} final row count: {df.shape[0]}')
+        df.write_csv(self.full_data_dir / 'csv' / f'{self.game}.csv')
+        df.write_parquet(self.full_data_dir / 'parquet' / f'{self.game}.parquet')
+
+    def process_data(self) -> pl.DataFrame:
         raise NotImplementedError
 
     def filter_invalid(self, df: pl.DataFrame, invalid_expr: pl.Expr, invalid_file_name: str, drop_cols: list = None):

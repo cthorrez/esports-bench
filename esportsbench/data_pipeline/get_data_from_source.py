@@ -40,10 +40,10 @@ GAME_CLASS_MAP = {
     'halo': HaloDataPipeline,
     'cod': CallOfDutyDataPipeline,
     'tetris': TetrisDataPipeline,
-    'sf': partial(FightingGamesDataPipeline, games=['street_fighter']),
-    'tek': partial(FightingGamesDataPipeline, games=['tekken']),
-    'kof': partial(FightingGamesDataPipeline, games=['king_of_fighters']),
-    'gg': partial(FightingGamesDataPipeline, games=['guilty_gear']),
+    'sf': partial(FightingGamesDataPipeline, game='street_fighter'),
+    'tek': partial(FightingGamesDataPipeline, game='tekken'),
+    'kof': partial(FightingGamesDataPipeline, game='king_of_fighters'),
+    'gg': partial(FightingGamesDataPipeline, game='guilty_gear'),
     'fifa' : FIFADataPipeline,
 }
 
@@ -57,7 +57,6 @@ def run_pipeline(games, action, num_processes=1, **kwargs):
         map_fn = map
 
     data_pipelines = [GAME_CLASS_MAP[game](**kwargs) for game in games]
-
     if action in {'ingest', 'all'}:
         list(map_fn(methodcaller('ingest_data'), data_pipelines))
 
@@ -66,7 +65,7 @@ def run_pipeline(games, action, num_processes=1, **kwargs):
         pool.join()
 
     if action in {'process', 'all'}:
-        list(map(methodcaller('process_data'), data_pipelines))
+        list(map(methodcaller('process_and_write'), data_pipelines))
 
     if kwargs['postprocess']:
         postprocess(
@@ -91,7 +90,7 @@ if __name__ == '__main__':
     parser.add_argument('-np', '--num_processes', type=int, required=False, default=1)
     parser.add_argument('--train_end_date', type=str, default='2023-03-31', help='inclusive end date for test set')
     parser.add_argument('--test_end_date', type=str, default='2024-03-31', help='inclusive end date for test set')
-    parser.add_argument('--min_rows_year', type=int, default=100, help='minmum number of rows in a year to begin including data')
+    parser.add_argument('--min_rows_year', type=int, default=100, help='minimum number of rows in a year to begin including data')
     parser.add_argument('--postprocess', '-p', action='store_true')
     args = vars(parser.parse_args())
     args = {key: val for key, val in args.items() if val is not None}

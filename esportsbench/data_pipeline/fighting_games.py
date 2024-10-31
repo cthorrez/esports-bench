@@ -36,12 +36,12 @@ class FightingGamesDataPipeline(LPDBDataPipeline):
         }
     }
 
-    def __init__(self, rows_per_request=1000, timeout=60.0, games=list(GAME_CONFIG.keys()), **kwargs):
+    def __init__(self, rows_per_request=1000, timeout=60.0, game=None, **kwargs):
         super().__init__(rows_per_request=rows_per_request, timeout=timeout, **kwargs)
-        self.games = games
+        self.game = game
 
     def process_data(self):
-        df = pl.scan_ndjson(self.raw_data_dir / f'{self.game}.jsonl', infer_schema_length=200000).collect()
+        df = pl.scan_ndjson(self.raw_data_dir / 'fighting_games.jsonl', infer_schema_length=200000).collect()
         print(f'initial row count: {df.shape[0]}')
 
         df = self.filter_invalid(df, invalid_date_expr, 'invalid_date')
@@ -75,12 +75,4 @@ class FightingGamesDataPipeline(LPDBDataPipeline):
             .unique()
             .sort('date', 'match_id')
         )
-
-        # games = df.select('game').group_by('game').count().sort('game')
-        # pl.Config.set_tbl_rows(5000)
-        # print(games)
-
-        for game_series in self.games:
-            game_df = df.filter(pl.col('game').is_in(GAME_CONFIG[game_series]))
-            print(f'{game_series} final row count: {game_df.shape[0]}')
-            game_df.write_csv(self.full_data_dir / f'{game_series}.csv')
+        return df.filter(pl.col('game').is_in(GAME_CONFIG[self.game]))

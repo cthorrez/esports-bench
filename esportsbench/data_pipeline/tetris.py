@@ -122,6 +122,4 @@ class TetrisDataPipeline(LPDBDataPipeline):
             .unique()
             .sort('date', 'match_id')
         )
-
-        print(f'final row count: {df.shape[0]}')
-        df.write_csv(self.full_data_path)
+        return df
