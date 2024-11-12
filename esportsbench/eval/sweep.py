@@ -8,7 +8,7 @@ from typing import Dict
 import numpy as np
 from riix.eval import grid_search
 from esportsbench.datasets import load_dataset
-from esportsbench.eval.bench import RATING_SYSTEM_MAP
+from esportsbench.constants import RATING_SYSTEM_NAME_CLASS_MAP
 
 # Suppress overflow warnings since many of the combinations swept over are expected to be numerically unstable
 warnings.filterwarnings('ignore', category=RuntimeWarning)
@@ -31,6 +31,7 @@ def construct_param_configurations(
     rng = np.random.default_rng(seed)
     param_values = {}
     for param_name, param_config in param_configs.items():
+        if param_name == 'model': continue
         
         if (hasattr(param_config, 'param_type')) and (getattr(param_config, 'param_type') == 'list'):
             idxs = rng.choice(len(param_config.options), size=num_samples)
@@ -45,6 +46,7 @@ def construct_param_configurations(
     for sample_idx in range(num_samples):
         sample = {}
         for param_name in param_configs.keys():
+            if param_name == 'model': continue
             sample[param_name] = param_values[param_name][sample_idx]
         param_samples.append(sample)
     return param_samples
@@ -57,7 +59,6 @@ def sweep(
     sweep_config,
     train_end_date,
     test_end_date,
-    rating_systems='all',
     rating_period='7D',
     drop_draws=False,
     num_samples=100,
@@ -87,14 +88,12 @@ def sweep(
         elif granularity == 'fine':
             game_sweep_config = sweep_config[dataset_name]
 
-        if rating_systems != 'all':
-            game_sweep_config = {key : val for key,val in game_sweep_config.items() if key in rating_systems}
-
-        for rating_system_name in game_sweep_config.keys():
-            print(f'Sweeping {rating_system_name} on {dataset_name} over {num_samples} configurations')
-            rating_system_class = RATING_SYSTEM_MAP[rating_system_name]
+        for rating_system_key in game_sweep_config.keys():
+            rating_system_name = game_sweep_config[rating_system_key]['model']
+            print(f'Sweeping {rating_system_key} on {dataset_name} over {num_samples} configurations')
+            rating_system_class = RATING_SYSTEM_NAME_CLASS_MAP[rating_system_name]
             param_configurations = construct_param_configurations(
-                param_configs=game_sweep_config[rating_system_name], num_samples=num_samples
+                param_configs=game_sweep_config[rating_system_key], num_samples=num_samples
             )
             best_params, best_metrics = grid_search(
                 rating_system_class=rating_system_class,
@@ -112,9 +111,9 @@ def sweep(
             out_dict = {'best_params': best_params.copy(), 'best_metrics': best_metrics.copy()}
             out_dir = f'{results_dir}/{dataset_name}'
             os.makedirs(out_dir, exist_ok=True)
-            out_file_path = f'{out_dir}/{rating_system_name}.json'
+            out_file_path = f'{out_dir}/{rating_system_key}.json'
             json.dump(out_dict, open(out_file_path, 'w'), indent=2)
-            sweep_results[dataset_name][rating_system_name] = best_params
+            sweep_results[dataset_name][rating_system_key] = best_params
             del best_metrics, best_params
     return sweep_results
 

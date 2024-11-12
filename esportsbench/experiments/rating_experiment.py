@@ -9,10 +9,10 @@ import hydra
 import pathlib
 import yaml
 from omegaconf import DictConfig
-from esportsbench.eval.bench import run_benchmark, ALL_RATING_SYSTEMS, add_mean_metrics, print_results
+from esportsbench.eval.bench import run_benchmark, add_mean_metrics, print_results
 from esportsbench.eval.sweep import sweep
 from esportsbench.eval.experiment_config import HyperparameterConfig
-from esportsbench.constants import GAME_SHORT_NAMES
+from esportsbench.constants import GAME_SHORT_NAMES, ALL_RATING_SYSTEM_NAMES
 
 # Suppress overflow warnings since many of the combinations swept over are expected to be numerically unstable
 warnings.filterwarnings('ignore', category=RuntimeWarning)
@@ -25,6 +25,7 @@ def construct_fine_sweep_config(broad_sweep_config, param_bounds, low_multiplier
         for rating_system, best_params in game_config.items():
             fine_rating_system_config = {}
             for param_name, best_value in best_params.items():
+                if (param_name == "model") or (isinstance(best_value, str)): continue
                 lower_bound = upper_bound = None
                 if (rating_system in param_bounds) and (param_name in param_bounds[rating_system]):
                     if param_bounds[rating_system][param_name].get('param_type') == 'list':
@@ -51,8 +52,7 @@ def main(config: DictConfig):
     param_bounds = yaml.full_load(open(param_file_path))
     
     games = GAME_SHORT_NAMES if config.games == 'all' else config.games
-    rating_systems = ALL_RATING_SYSTEMS if config.rating_systems == 'all' else config.rating_systems
-
+    
     common_sweep_args = {
         'data_dir' : config.data_dir,
         'rating_period': config.rating_period,
@@ -67,25 +67,31 @@ def main(config: DictConfig):
     for game in games:
         broad_sweep_results = sweep(
             games=[game],
-            rating_systems=rating_systems,
             granularity='broad',
             sweep_config=config.broad_sweep_config,
             **common_sweep_args
         )
 
         fine_sweep_config = construct_fine_sweep_config(broad_sweep_results, param_bounds)
+        for rating_key in config.broad_sweep_config:
+            for game in fine_sweep_config:
+                fine_sweep_config[game][rating_key]['model'] = config.broad_sweep_config[rating_key]['model']
+
         fine_sweep_results = sweep(
             games=[game],
-            rating_systems=config.rating_systems,
             granularity='fine',
             sweep_config=fine_sweep_config,
             **common_sweep_args,
         )
         best_params[game] = fine_sweep_results[game]
 
+
+    for rating_key in config.broad_sweep_config:
+        for game in best_params:
+            best_params[game][rating_key]['model'] = config.broad_sweep_config[rating_key]['model']
+
     benchark = run_benchmark(
         games=games,
-        rating_systems=rating_systems,
         rating_period=config.rating_period,
         train_end_date=config.train_end_date,
         test_end_date=config.test_end_date,

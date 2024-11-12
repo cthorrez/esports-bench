@@ -1,13 +1,13 @@
 # default hyperparameters
 
-data_dir: 'hf_data'
-train_end_date: '2023-03-31'
-test_end_date: '2024-03-31'
+# data_dir: 'hf_data'
+data_dir: 'final_data_v3_1'
+train_end_date: '2023-09-30'
+test_end_date: '2024-09-30'
 rating_period: '7D'
-num_samples: 1000
-num_processes: 20
-games: 'all'
-rating_systems: 'all'
+num_samples: 16
+num_processes: 16
+games: ['tetris', 'halo']
 
 # this will load the values from the listed file
 defaults:

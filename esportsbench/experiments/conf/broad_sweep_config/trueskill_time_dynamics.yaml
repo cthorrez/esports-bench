@@ -1,0 +1,74 @@
+# default broad sweep hyperparameter ranges
+trueskill_online_match:
+  model: trueskill
+  update_method:
+    param_type: list
+    options: ['online']
+  variance_increase_method:
+    param_type: list
+    options: ['match']
+  initial_sigma:
+    min_value: 0.8333
+    max_value: 83.33
+  beta:
+    min_value: 0.4166 
+    max_value: 41.66
+  tau:
+    min_value: 0.00833
+    max_value: 0.833
+
+trueskill_online_time:
+  model: trueskill
+  update_method:
+    param_type: list
+    options: ['online']
+  variance_increase_method:
+    param_type: list
+    options: ['time']
+  initial_sigma:
+    min_value: 0.8333
+    max_value: 83.33
+  beta:
+    min_value: 0.4166 
+    max_value: 41.66
+  tau:
+    min_value: 0.00833
+    max_value: 0.833
+
+
+trueskill_batched_match:
+  model: trueskill
+  update_method:
+    param_type: list
+    options: ['batched']
+  variance_increase_method:
+    param_type: list
+    options: ['match']
+  initial_sigma:
+    min_value: 0.8333
+    max_value: 83.33
+  beta:
+    min_value: 0.4166 
+    max_value: 41.66
+  tau:
+    min_value: 0.00833
+    max_value: 0.833
+
+
+trueskill_batched_time:
+  model: trueskill
+  update_method:
+    param_type: list
+    options: ['online']
+  variance_increase_method:
+    param_type: list
+    options: ['match']
+  initial_sigma:
+    min_value: 0.8333
+    max_value: 83.33
+  beta:
+    min_value: 0.4166 
+    max_value: 41.66
+  tau:
+    min_value: 0.00833
+    max_value: 0.833

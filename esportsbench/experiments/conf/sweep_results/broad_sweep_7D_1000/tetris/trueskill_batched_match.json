@@ -1,0 +1,16 @@
+{
+  "best_params": {
+    "update_method": "batched",
+    "variance_increase_method": "match",
+    "initial_sigma": 6.724273608542054,
+    "beta": 12.887933060680872,
+    "tau": 0.7734139053529127
+  },
+  "best_metrics": {
+    "accuracy": 0.6160150078988942,
+    "accuracy_without_draws": 0.6160379221805253,
+    "log_loss": 0.6393689259174317,
+    "brier_score": 0.22473435583822193,
+    "duration": 0.449599027633667
+  }
+}

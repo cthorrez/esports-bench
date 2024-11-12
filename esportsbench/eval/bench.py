@@ -24,35 +24,9 @@ from riix.models.autograd_rating_system import AutogradRatingSystem
 from riix.models.baselines import BaselineRatingSystem
 from esportsbench.arg_parsers import get_games_argparser, comma_separated
 from esportsbench.datasets import load_dataset
-from esportsbench.constants import GAME_NAME_MAP
+from esportsbench.constants import GAME_NAME_MAP, ALL_RATING_SYSTEM_NAMES, RATING_SYSTEM_NAME_CLASS_MAP
 
-RATING_SYSTEM_MAP = {
-    'elo': Elo,
-    'glicko': Glicko,
-    'glicko2': Glicko2,
-    'trueskill': TrueSkill,
-    'wl_bt': partial(WengLin, model='bt', tau=0.0),
-    'wl_tm': partial(WengLin, model='tm', tau=0.0),
-    'melo': Melo,
-    'genelo': GenElo,
-    # 'cvglicko': ConstantVarianceGlicko,
-    'velo': vElo,
-    # 'im': IterativeMarkov, # these 2 are so bad it's not even worth comparing in most experiments
-    # 'tm': TemporalMassey,
-    'vskf_bt': partial(VSKF, model='bt'),
-    'vskf_tm': partial(VSKF, model='tm'),
-    # 'odd': OnlineDiscDecomp,
-    # 'ork': OnlineRaoKupper,
-    # 'elod': EloDavidson,
-    # 'elom': EloMentum,
-    # 'yuksel': Yuksel2024,
-    # 'autograd' : AutogradRatingSystem
-    'random_base' : partial(BaselineRatingSystem, mode='random'),
-    'wr_base' : partial(BaselineRatingSystem, mode='win_rate'),
-    'win_base' : partial(BaselineRatingSystem, mode='wins'),
-    'appearance_base' : partial(BaselineRatingSystem, mode='appearances'),
-}
-ALL_RATING_SYSTEMS = list(RATING_SYSTEM_MAP.keys())
+
 
 
 def add_mean_metrics(data_dict):
@@ -91,13 +65,13 @@ def eval_func(input_tuple):
 
 def run_benchmark(
     games,
-    rating_systems,
     rating_period,
     train_end_date,
     test_end_date,
     data_dir,
     drop_draws=False,
     max_rows=None,
+    rating_systems=ALL_RATING_SYSTEM_NAMES,
     hyperparameter_config='default',
     num_processes=8,
 ):
@@ -118,9 +92,15 @@ def run_benchmark(
                 data_dir=data_dir,
             )
 
-            for rating_system_name in rating_systems:
-                print(f'\nEvaluating {rating_system_name} on {game_short_name}')
-                rating_system_class = RATING_SYSTEM_MAP[rating_system_name]
+            if isinstance(hyperparameter_config, dict):
+                rating_system_keys = [key for key in hyperparameter_config[game_short_name].keys()]
+            else:
+                rating_system_keys = rating_systems
+
+            for rating_system_key in rating_system_keys:
+                print(f'\nEvaluating {rating_system_key} on {game_short_name}')
+                rating_system_name = hyperparameter_config[game_short_name][rating_system_key].get('model', rating_system_key)
+                rating_system_class = RATING_SYSTEM_NAME_CLASS_MAP[rating_system_name]
                 params = {}
                 if hyperparameter_config == 'default':
                     print('No hyperparameter config specified, using class default hyperparameters')
@@ -129,19 +109,18 @@ def run_benchmark(
                     if os.path.exists(params_path):
                         params = json.load(open(params_path))['best_params']
                         print(f'Using hyperparameters from {params_path}')
-                        print(params)
                     else:
                         print(f"couldn't find param config for {rating_system_name} on {game_name}, Exiting.")
                         raise FileNotFoundError
                 elif isinstance(hyperparameter_config, dict):
                     print('Using provided hyperparameters:')
-                    params = hyperparameter_config[game_short_name][rating_system_name]
+                    params = hyperparameter_config[game_short_name][rating_system_key]
                     print(params)
                 else:
                     print(hyperparameter_config)
                     raise ValueError('Expected config to be either a path or a dict')
-                    
-                yield (game_name, rating_system_name, dataset, rating_system_class, params, test_mask)
+                if 'model' in params: del params['model']
+                yield (game_name, rating_system_key, dataset, rating_system_class, params, test_mask)
             
     pool = multiprocessing.Pool(processes=num_processes)
     eval_results = pool.imap(eval_func, eval_iterator())
@@ -185,8 +164,8 @@ if __name__ == '__main__':
     parser.add_argument(
         '-rs',
         '--rating_systems',
-        type=comma_separated(ALL_RATING_SYSTEMS),
-        default=ALL_RATING_SYSTEMS,
+        type=comma_separated(ALL_RATING_SYSTEM_NAMES),
+        default=ALL_RATING_SYSTEM_NAMES,
     )
     parser.add_argument('-dd', '--drop_draws', action='store_true')
     parser.add_argument('-rp', '--rating_period', type=str, required=False, default='7D')

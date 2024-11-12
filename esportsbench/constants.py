@@ -1,4 +1,22 @@
 """constants and configs for use in other scripts"""
+from functools import partial
+from riix.models.elo import Elo
+from riix.models.glicko import Glicko
+from riix.models.glicko2 import Glicko2
+from riix.models.trueskill import TrueSkill
+from riix.models.weng_lin import WengLin
+from riix.models.melo import Melo
+from riix.models.gen_elo import GenElo
+from riix.models.constant_variance_glicko import ConstantVarianceGlicko
+from riix.models.velo import vElo
+from riix.models.online_disc_decomp import OnlineDiscDecomp
+from riix.models.online_rao_kupper import OnlineRaoKupper
+from riix.models.elo_davidson import EloDavidson
+from riix.models.skf import VSKF
+from riix.models.elomentum import EloMentum
+from riix.models.yuksel_2024 import Yuksel2024
+from riix.models.autograd_rating_system import AutogradRatingSystem
+from riix.models.baselines import BaselineRatingSystem
 
 GAME_NAME_MAP = {
     'lol': 'league_of_legends',
@@ -49,3 +67,30 @@ OFFICIAL_NAME_MAP = {
     'rainbow_six': 'Rainbow Six: Siege',
 }
 
+RATING_SYSTEM_NAME_CLASS_MAP = {
+    'elo': Elo,
+    'glicko': Glicko,
+    'glicko2': Glicko2,
+    'trueskill': TrueSkill,
+    'wl_bt': partial(WengLin, model='bt', tau=0.0),
+    'wl_tm': partial(WengLin, model='tm', tau=0.0),
+    'melo': Melo,
+    'genelo': GenElo,
+    # 'cvglicko': ConstantVarianceGlicko,
+    'velo': vElo,
+    # 'im': IterativeMarkov, # these 2 are so bad it's not even worth comparing in most experiments
+    # 'tm': TemporalMassey,
+    'vskf_bt': partial(VSKF, model='bt'),
+    'vskf_tm': partial(VSKF, model='tm'),
+    # 'odd': OnlineDiscDecomp,
+    # 'ork': OnlineRaoKupper,
+    # 'elod': EloDavidson,
+    # 'elom': EloMentum,
+    'yuksel': Yuksel2024,
+    # 'autograd' : AutogradRatingSystem
+    'random_base' : partial(BaselineRatingSystem, mode='random'),
+    'wr_base' : partial(BaselineRatingSystem, mode='win_rate'),
+    'win_base' : partial(BaselineRatingSystem, mode='wins'),
+    'appearance_base' : partial(BaselineRatingSystem, mode='appearances'),
+}
+ALL_RATING_SYSTEM_NAMES = list(RATING_SYSTEM_NAME_CLASS_MAP.keys())

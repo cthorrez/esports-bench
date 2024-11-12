@@ -1,10 +1,12 @@
 # default broad sweep hyperparameter ranges
 elo:
+  model: elo
   k:
     min_value: 3.2
     max_value: 320.0
 
 glicko:
+  model: glicko
   initial_rating_dev:
     min_value: 10.
     max_value: 1000.0
@@ -13,6 +15,7 @@ glicko:
     max_value: 100.0
 
 glicko2:
+  model: glicko2
   initial_rd:
     min_value: 20.0
     max_value: 700.0
@@ -24,6 +27,7 @@ glicko2:
     max_value: 1.2
 
 trueskill:
+  model: trueskill
   initial_sigma:
     min_value: 0.8333
     max_value: 83.33
@@ -35,6 +39,7 @@ trueskill:
     max_value: 0.833
 
 vskf_bt:
+  model: vskf_bt
   v_0:
     min_value: 1.0e-6
     max_value: 10.0
@@ -49,6 +54,7 @@ vskf_bt:
     max_value: 0.1
 
 vskf_tm:
+  model: vskf_tm
   v_0:
     min_value: 1.0e-6
     max_value: 10.0
@@ -63,6 +69,7 @@ vskf_tm:
     max_value: 0.1
 
 wl_bt:
+  model: wl_bt
   initial_sigma:
     min_value: 0.8333
     max_value: 83.33
@@ -74,6 +81,7 @@ wl_bt:
     max_value: 1.0e-3
 
 wl_tm:
+  model: wl_tm
   initial_sigma:
     min_value: 0.8333
     max_value: 83.33
@@ -85,6 +93,7 @@ wl_tm:
     max_value: 1.0e-3
 
 melo:
+  model: melo
   dimension:
     param_type: list
     options: [1, 5, 10]
@@ -96,6 +105,7 @@ melo:
     max_value: 1.0
 
 velo:
+  model: velo
   initial_sigma:
     min_value: 1.0e-6
     max_value: 10.0
@@ -110,16 +120,19 @@ velo:
     max_value: 10.0
 
 genelo:
+  model: genelo
   sigma:
     min_value: 6.0
     max_value: 600.0
 
 random_base:
+  model: random_base
   temperature:
     min_value: 1.0e-3
     max_value: 10.0
 
 wr_base:
+  model: wr_base
   temperature:
     min_value: 1.0e-3
     max_value: 10.0
@@ -128,6 +141,7 @@ wr_base:
     max_value: 1000.0
 
 win_base:
+  model: win_base
   temperature:
     min_value: 1.0e-3
     max_value: 10.0
@@ -136,6 +150,7 @@ win_base:
     max_value: 1000.0
 
 appearance_base:
+  model: appearance_base
   temperature:
     min_value: 1.0e-3
     max_value: 10.0
@@ -144,6 +159,7 @@ appearance_base:
     max_value: 1000.0
 
 yuksel:
+  model: yuksel
   delta_r_max:
     min_value: 10.0
     max_value: 1000.0

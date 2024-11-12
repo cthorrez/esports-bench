@@ -3,7 +3,8 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 from esportsbench.arg_parsers import get_games_argparser, comma_separated
-from esportsbench.eval.bench import run_benchmark, ALL_RATING_SYSTEMS
+from esportsbench.eval.bench import run_benchmark
+from esportsbench.constants import ALL_RATING_SYSTEM_NAMES
 from cycler import cycler
 
 
@@ -102,8 +103,8 @@ if __name__ == '__main__':
     parser.add_argument(
         '-rs',
         '--rating_systems',
-        type=comma_separated(ALL_RATING_SYSTEMS),
-        default=ALL_RATING_SYSTEMS,
+        type=comma_separated(ALL_RATING_SYSTEM_NAMES),
+        default=ALL_RATING_SYSTEM_NAMES,
     )
     parser.add_argument('-dd', '--drop_draws', action='store_true')
     parser.add_argument('--train_end_date', type=str, default='2023-03-31', help='inclusive end date for test set')
