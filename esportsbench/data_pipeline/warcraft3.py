@@ -121,7 +121,7 @@ class Warcraft3DataPipeline(LPDBDataPipeline):
         null_outcome_expr = pl.col('outcome').is_null()
         df = self.filter_invalid(df, null_outcome_expr, 'null_outcome')
 
-        team_matches = pl.scan_ndjson(self.raw_data_dir / 'warcraft3_team.jsonl', infer_schema_length=100).collect()
+        team_matches = pl.scan_ndjson(self.raw_data_dir / 'warcraft3_team.jsonl', infer_schema_length=50000).collect()
         team_matches = self.filter_invalid(team_matches, invalid_date_expr, 'invalid_date_team')
         print(f'initial team match row count: {team_matches.shape[0]}')
 

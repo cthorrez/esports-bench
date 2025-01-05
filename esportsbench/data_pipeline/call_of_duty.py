@@ -22,7 +22,7 @@ class CallOfDutyDataPipeline(LPDBDataPipeline):
         super().__init__(rows_per_request=rows_per_request, timeout=timeout, **kwargs)
 
     def process_data(self):
-        df = pl.scan_ndjson(self.raw_data_dir / 'call_of_duty.jsonl', infer_schema_length=100).collect()
+        df = pl.scan_ndjson(self.raw_data_dir / 'call_of_duty.jsonl', infer_schema_length=100000).collect()
         print(f'initial row count: {df.shape[0]}')
 
         df = self.filter_invalid(df, invalid_date_expr, 'invalid_date', drop_cols=['match2opponents'])

@@ -5,23 +5,6 @@ from functools import partial
 import multiprocessing
 from collections import defaultdict
 from riix.eval import evaluate
-from riix.models.elo import Elo
-from riix.models.glicko import Glicko
-from riix.models.glicko2 import Glicko2
-from riix.models.trueskill import TrueSkill
-from riix.models.weng_lin import WengLin
-from riix.models.melo import Melo
-from riix.models.gen_elo import GenElo
-from riix.models.constant_variance_glicko import ConstantVarianceGlicko
-from riix.models.velo import vElo
-from riix.models.online_disc_decomp import OnlineDiscDecomp
-from riix.models.online_rao_kupper import OnlineRaoKupper
-from riix.models.elo_davidson import EloDavidson
-from riix.models.skf import VSKF
-from riix.models.elomentum import EloMentum
-from riix.models.yuksel_2024 import Yuksel2024
-from riix.models.autograd_rating_system import AutogradRatingSystem
-from riix.models.baselines import BaselineRatingSystem
 from esportsbench.arg_parsers import get_games_argparser, comma_separated
 from esportsbench.datasets import load_dataset
 from esportsbench.constants import GAME_NAME_MAP, ALL_RATING_SYSTEM_NAMES, RATING_SYSTEM_NAME_CLASS_MAP

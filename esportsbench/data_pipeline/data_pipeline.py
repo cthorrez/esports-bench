@@ -174,6 +174,19 @@ class DataPipeline(ABC):
         return df
 
 
+def unpack_players(players):
+    out_players = []
+    if isinstance(players, list):
+        for player in players:
+            if isinstance(player, dict):
+                out_players.append(player['player'])
+    if isinstance(players, dict):
+        for player in players.values():
+            if isinstance(player, dict):
+                out_players.append(player['player'])
+    return out_players
+
+
 class LPDBDataPipeline(DataPipeline):
     """class for ingesting and processing data from LPDB"""
 
@@ -244,6 +257,7 @@ class LPDBDataPipeline(DataPipeline):
             results = response_json['result']
             is_done = len(results) < self.rows_per_request
         return results, is_done
+
     
     @staticmethod
     def unpack_team_match(raw_games):
@@ -254,17 +268,31 @@ class LPDBDataPipeline(DataPipeline):
         for idx, game in enumerate(games):
             if game['mode'] == '2v2':
                 continue
-            if game['participants'] == []:
+            # if game['participants'] == []:
+            #     continue
+            # if len(game['participants']) != 2:
+            #     continue
+            # if len(game['scores']) != 2:
+            #     continue
+            if len(game['opponents']) != 2:
                 continue
-            if len(game['participants']) != 2:
+            opponents = game['opponents']
+
+            opp_1_players = []
+            if 'players' in opponents[0]:
+                opp_1_players = unpack_players(opponents[0]['players'])
+            opp_2_players = []
+            if 'players' in opponents[1]:
+                opp_2_players = unpack_players(opponents[1]['players'])
+
+            if (len(opp_1_players) != 1) or (len(opp_2_players) != 1):
                 continue
-            if len(game['scores']) != 2:
-                continue
-            players = [participant['player'] for participant in game['participants'].values()]
-            player_1, player_2 = players
+
+            player_1 = opp_1_players[0]
+            player_2 = opp_2_players[0]
             try:
-                player_1_score = float(game['scores'][0])
-                player_2_score = float(game['scores'][1])
+                player_1_score = float(opponents[0]['score'])
+                player_2_score = float(opponents[1]['score'])
             except:
                 continue
             outcome = outcome_from_scores(player_1_score, player_2_score)

@@ -27,7 +27,7 @@ class RocketLeagueDataPipeline(LPDBDataPipeline):
     def process_data(self):
         df = pl.scan_ndjson(
             self.raw_data_dir / 'rocket_league.jsonl',
-            infer_schema_length=162297,
+            infer_schema_length=200000,
             ignore_errors=False
         ).collect()
         print(f'initial row count: {df.shape[0]}')

@@ -24,7 +24,7 @@ class RainbowSixDataPipeline(LPDBDataPipeline):
         super().__init__(rows_per_request=rows_per_request, timeout=timeout, **kwargs)
 
     def process_data(self):
-        df = pl.scan_ndjson(self.raw_data_dir / 'rainbow_six.jsonl', infer_schema_length=67849).collect()
+        df = pl.scan_ndjson(self.raw_data_dir / 'rainbow_six.jsonl', infer_schema_length=100000).collect()
 
         print(f'initial row count: {df.shape[0]}')
 

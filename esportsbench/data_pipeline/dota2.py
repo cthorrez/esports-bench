@@ -1,4 +1,5 @@
 """Module for ingesting dota2 data from liquipedia"""
+import json
 import polars as pl
 from esportsbench.data_pipeline.data_pipeline import LPDBDataPipeline
 from esportsbench.utils import is_null_or_empty, invalid_date_expr
@@ -9,6 +10,7 @@ class Dota2DataPipeline(LPDBDataPipeline):
 
     game = 'dota2'
     version = 'v3'
+    schema_overrides = {'extradata': json.dumps}
     request_params_groups = {
         'dota2.jsonl': {
             'wiki': 'dota2',
@@ -23,7 +25,7 @@ class Dota2DataPipeline(LPDBDataPipeline):
         super().__init__(rows_per_request=rows_per_request, timeout=timeout, **kwargs)
 
     def process_data(self):
-        df = pl.scan_ndjson(self.raw_data_dir / 'dota2.jsonl', infer_schema_length=1).collect()
+        df = pl.scan_ndjson(self.raw_data_dir / 'dota2.jsonl', infer_schema_length=200000).collect()
         print(f'initial row count: {df.shape[0]}')
 
         df = self.filter_invalid(df, invalid_date_expr, 'invalid_date')

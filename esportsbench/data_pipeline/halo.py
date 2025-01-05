@@ -23,7 +23,7 @@ class HaloDataPipeline(LPDBDataPipeline):
     def process_data(self):
         """read data from raw jsonl, filter invalid data, process and write to final data  location"""
 
-        df = pl.scan_ndjson(self.raw_data_dir / 'halo.jsonl', infer_schema_length=1000).collect()
+        df = pl.scan_ndjson(self.raw_data_dir / 'halo.jsonl', infer_schema_length=50000).collect()
         print(f'initial row count: {df.shape[0]}')
 
         # filter out matches without exactly 2 teams

@@ -61,7 +61,7 @@ OFFICIAL_NAME_MAP = {
     'league_of_legends': 'League of Legends',
     'counterstrike': 'Counter-Strike',
     'call_of_duty': 'Call of Duty',
-    'halo': 'Halo (series)',
+    'halo': 'Halo',
     'overwatch': 'Overwatch',
     'valorant': 'VALORANT',
     'rainbow_six': 'Rainbow Six: Siege',
