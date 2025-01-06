@@ -25,11 +25,16 @@ class RocketLeagueDataPipeline(LPDBDataPipeline):
         super().__init__(rows_per_request=rows_per_request, timeout=timeout, **kwargs)
 
     def process_data(self):
-        df = pl.scan_ndjson(
+        # df = pl.scan_ndjson(
+        #     self.raw_data_dir / 'rocket_league.jsonl',
+        #     infer_schema_length=200000,
+        #     ignore_errors=True
+        # ).collect()
+        df = pl.read_ndjson(
             self.raw_data_dir / 'rocket_league.jsonl',
-            infer_schema_length=200000,
-            ignore_errors=False
-        ).collect()
+            infer_schema_length=120_000,
+            ignore_errors=True
+        )
         print(f'initial row count: {df.shape[0]}')
 
         df = self.filter_invalid(df, invalid_date_expr, 'invalid_date')
