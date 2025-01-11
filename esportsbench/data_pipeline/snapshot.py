@@ -41,6 +41,9 @@ def compare_file_snapshots(prev_idx=-2, cur_idx=-1):
 
 
 def compare_snapshots(prev, cur):
+    prev = prev.with_column(
+        pl.when(pl.col("game_name") == "fifa").then("eafc").otherwise(pl.col("game_name")).alias("game_name")
+    )
     comparison = prev.join(cur, on='game_name', how='inner', suffix="_2")
     summary = comparison.select([
         pl.col('game_name'),
@@ -70,7 +73,8 @@ def compare_snapshots(prev, cur):
 
 def make_and_compare():
     snapshots = sorted(glob.glob(f'{SNAPSHOT_DIR}/*.parquet'))
-    cur = make_snapshot()
+    cur = make_snapshot().sort('num_matches', descending=True)
+    print(cur)
     prev =  pl.read_parquet(snapshots[-1])
     compare_snapshots(prev, cur)
 
