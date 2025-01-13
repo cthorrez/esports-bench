@@ -4,17 +4,17 @@ from esportsbench.data_pipeline.data_pipeline import LPDBDataPipeline
 from esportsbench.utils import is_null_or_empty, invalid_date_expr, outcome_from_scores
 
 
-class FIFADataPipeline(LPDBDataPipeline):
+class EAFCDataPipeline(LPDBDataPipeline):
     """class for ingesting and processing FIFA data from LPDB"""
 
-    game = 'fifa'
+    game = 'ea_sports_fc'
     version = 'v3'
     schema_overrides = {'match2games': json.dumps}
     request_params_groups = {
-        'fifa.jsonl': {
-            'wiki': 'fifa',
-            'query': 'date, match2opponents, winner, resulttype, finished, bestof, match2id, match2games, extradata',
-            'conditions': '[[mode::1v1]] AND [[walkover::!1]] AND [[walkover::!2]] AND [[walkover::!ff]] AND [[finished::1]]',
+        'ea_sports_fc.jsonl': {
+            'wiki': 'easportsfc',
+            'query': 'date, match2opponents, winner, resulttype, finished, bestof, match2id, mode, match2games, extradata',
+            'conditions': '[[walkover::!1]] AND [[walkover::!2]] AND [[walkover::!ff]] AND [[finished::1]]',
             'order': 'date ASC, match2id ASC',
         }
     }
@@ -33,101 +33,101 @@ class FIFADataPipeline(LPDBDataPipeline):
 
     @staticmethod
     def parse_opponents(raw_opponents):
-        team_1 = FIFADataPipeline.parse_team(raw_opponents[0])
-        team_2 = FIFADataPipeline.parse_team(raw_opponents[1])
+        team_1 = EAFCDataPipeline.parse_team(raw_opponents[0])
+        team_2 = EAFCDataPipeline.parse_team(raw_opponents[1])
         return [team_1, team_2]
 
 
-    @staticmethod
-    def unpack_team_match(raw_data):
-        raw_games = raw_data['match2games']
-        raw_opponents = raw_data['match2opponents']
-        opponents = FIFADataPipeline.parse_opponents(raw_opponents)
-        if opponents[0] == {} or opponents[1] == {}:
-            return None
-        games = json.loads(raw_games)
-        outputs = []
-        for idx, game in enumerate(games):
-            if game['participants'] == []:
-                continue
-            if len(game['participants']) != 2:
-                continue
-            if len(game['scores']) != 2:
-                continue
-            participant_keys = sorted(list(game['participants'].keys()))
-            participant_ids = list(map(lambda x: int(x[2]), participant_keys))
-            participant_names = [game['participants'][pk].get('name') for pk in participant_keys]
-            if 'tbd' in participant_names:
-                continue
-            if len(participant_ids) != 2:
-                continue
-            player_1_score, player_2_score = map(int, game['scores'])
-            outcome = outcome_from_scores(player_1_score, player_2_score)
-            player_1 = participant_names[0]
-            if player_1 is None:
-                player_1 = opponents[0][participant_ids[0]]
-            player_2 = participant_names[1]
-            if player_2 is None:
-                player_2 = opponents[1][participant_ids[1]]
-            outputs.append(
-                {
-                    'player_1': player_1,
-                    'player_2': player_2,
-                    'player_1_score': float(player_1_score),
-                    'player_2_score': float(player_2_score),
-                    'outcome': outcome,
-                    'game_idx': idx,
-                }
-            )
+    # @staticmethod
+    # def unpack_team_match(raw_data):
+    #     raw_games = raw_data['match2games']
+    #     raw_opponents = raw_data['match2opponents']
+    #     opponents = EAFCDataPipeline.parse_opponents(raw_opponents)
+    #     if opponents[0] == {} or opponents[1] == {}:
+    #         return None
+    #     games = json.loads(raw_games)
+    #     outputs = []
+    #     for idx, game in enumerate(games):
+    #         if game['participants'] == []:
+    #             continue
+    #         if len(game['participants']) != 2:
+    #             continue
+    #         if len(game['scores']) != 2:
+    #             continue
+    #         participant_keys = sorted(list(game['participants'].keys()))
+    #         participant_ids = list(map(lambda x: int(x[2]), participant_keys))
+    #         participant_names = [game['participants'][pk].get('name') for pk in participant_keys]
+    #         if 'tbd' in participant_names:
+    #             continue
+    #         if len(participant_ids) != 2:
+    #             continue
+    #         player_1_score, player_2_score = map(int, game['scores'])
+    #         outcome = outcome_from_scores(player_1_score, player_2_score)
+    #         player_1 = participant_names[0]
+    #         if player_1 is None:
+    #             player_1 = opponents[0][participant_ids[0]]
+    #         player_2 = participant_names[1]
+    #         if player_2 is None:
+    #             player_2 = opponents[1][participant_ids[1]]
+    #         outputs.append(
+    #             {
+    #                 'player_1': player_1,
+    #                 'player_2': player_2,
+    #                 'player_1_score': float(player_1_score),
+    #                 'player_2_score': float(player_2_score),
+    #                 'outcome': outcome,
+    #                 'game_idx': idx,
+    #             }
+    #         )
 
-        return outputs
+    #     return outputs
 
-    def unpack_team_matches(self, team_df):
+    # def unpack_team_matches(self, team_df):
 
-        team_match_struct = pl.Struct([
-            pl.Field("player_1", pl.Utf8),
-            pl.Field("player_2", pl.Utf8),
-            pl.Field("player_1_score", pl.Float64),
-            pl.Field("player_2_score", pl.Float64),
-            pl.Field("outcome", pl.Float64),
-            pl.Field("game_idx", pl.Int64),
-        ])
+    #     team_match_struct = pl.Struct([
+    #         pl.Field("player_1", pl.Utf8),
+    #         pl.Field("player_2", pl.Utf8),
+    #         pl.Field("player_1_score", pl.Float64),
+    #         pl.Field("player_2_score", pl.Float64),
+    #         pl.Field("outcome", pl.Float64),
+    #         pl.Field("game_idx", pl.Int64),
+    #     ])
 
-        # first combine match2games and match2games into a single col
-        team_df = team_df.with_columns(
-             pl.struct(['match2opponents', 'match2games']).alias("match2data")
-        )
+    #     # first combine match2games and match2games into a single col
+    #     team_df = team_df.with_columns(
+    #          pl.struct(['match2opponents', 'match2games']).alias("match2data")
+    #     )
 
-        team_df = team_df.with_columns(
-            pl.col('match2data').map_elements(
-                function=self.unpack_team_match,
-                skip_nulls=True,
-                return_dtype=pl.List(team_match_struct)
-            ).alias('games')
-        )
+    #     team_df = team_df.with_columns(
+    #         pl.col('match2data').map_elements(
+    #             function=self.unpack_team_match,
+    #             skip_nulls=True,
+    #             return_dtype=pl.List(team_match_struct)
+    #         ).alias('games')
+    #     )
 
-        games_df = team_df.explode('games').unnest('games')
-        bad_team_game_expr = (
-            is_null_or_empty(pl.col('player_1'))
-            | is_null_or_empty(pl.col('player_2'))
-            | is_null_or_empty(pl.col('player_1_score'))
-            | is_null_or_empty(pl.col('player_2_score'))
-            | (pl.col('player_1_score') == -1)
-            | (pl.col('player_2_score') == -1)
-        )
-        games_df = self.filter_invalid(games_df, bad_team_game_expr, 'bad_team_game')
+    #     games_df = team_df.explode('games').unnest('games')
+    #     bad_team_game_expr = (
+    #         is_null_or_empty(pl.col('player_1'))
+    #         | is_null_or_empty(pl.col('player_2'))
+    #         | is_null_or_empty(pl.col('player_1_score'))
+    #         | is_null_or_empty(pl.col('player_2_score'))
+    #         | (pl.col('player_1_score') == -1)
+    #         | (pl.col('player_2_score') == -1)
+    #     )
+    #     games_df = self.filter_invalid(games_df, bad_team_game_expr, 'bad_team_game')
 
-        games_df = games_df.with_columns(
-            pl.col('player_1_score').cast(pl.Float64).alias('player_1_score'),
-            pl.col('player_2_score').cast(pl.Float64).alias('player_2_score'),
-            pl.concat_str([pl.col('match2id'), pl.col('game_idx').cast(pl.Utf8)], separator='_').alias('match2id'),
-        )
+    #     games_df = games_df.with_columns(
+    #         pl.col('player_1_score').cast(pl.Float64).alias('player_1_score'),
+    #         pl.col('player_2_score').cast(pl.Float64).alias('player_2_score'),
+    #         pl.concat_str([pl.col('match2id'), pl.col('game_idx').cast(pl.Utf8)], separator='_').alias('match2id'),
+    #     )
 
-        return games_df
+    #     return games_df
 
     def process_data(self):
         df = pl.scan_ndjson(
-            self.raw_data_dir / 'fifa.jsonl', infer_schema_length=100, ignore_errors=True
+            self.raw_data_dir / 'ea_sports_fc.jsonl', infer_schema_length=100, ignore_errors=True
         ).collect()
 
         print(f'initial row count: {df.shape[0]}')
@@ -215,8 +215,16 @@ class FIFADataPipeline(LPDBDataPipeline):
         null_outcome_expr = pl.col('outcome').is_null()
         df = self.filter_invalid(df, null_outcome_expr, 'null_outcome')
 
+        # team_games = self.unpack_team_matches(team_df)
+        # print(f'1v1 matches from team matches: {len(team_games)}')
+        # df = pl.concat([df, team_games], how='diagonal')
+        # print(f'matches after merging: {len(df)}')
 
-        team_games = self.unpack_team_matches(team_df)
+        team_matches = df.filter(pl.col('mode') == 'team').drop('player_1', 'player_2', 'player_1_score', 'player_2_score', 'outcome', 'bestof')
+        team_matches = self.filter_invalid(team_matches, invalid_date_expr, 'invalid_date_team')
+        print(f'initial team match row count: {team_matches.shape[0]}')
+
+        team_games = self.unpack_team_matches(team_matches)
         print(f'1v1 matches from team matches: {len(team_games)}')
 
         df = pl.concat([df, team_games], how='diagonal')

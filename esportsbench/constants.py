@@ -38,7 +38,7 @@ GAME_NAME_MAP = {
     'tek': 'tekken',
     'kof': 'king_of_fighters',
     'gg': 'guilty_gear',
-    'fifa': 'fifa',
+    'eafc': 'ea_sports_fc',
 }
 
 GAME_NAMES = list(GAME_NAME_MAP.values())
@@ -55,7 +55,7 @@ OFFICIAL_NAME_MAP = {
     'king_of_fighters': 'King of Fighters',
     'guilty_gear': 'Guilty Gear',
     'tetris': 'Tetris',
-    'fifa': 'FIFA', 
+    'ea_sports_fc': 'EA Sports FC', 
     'rocket_league': 'Rocket League',
     'dota2': 'Dota 2',
     'league_of_legends': 'League of Legends',

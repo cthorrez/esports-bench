@@ -139,7 +139,7 @@ class DataPipeline(ABC):
                     is_done = True
                 if num_rows == 0:
                     is_done = True
-                    sess.cache.delete(keys=request_key)
+                    sess.cache.delete(request_key)
         sess.close()
         print(f'wrote {num_rows} to {output_path}')
 
@@ -268,12 +268,6 @@ class LPDBDataPipeline(DataPipeline):
         for idx, game in enumerate(games):
             if game['mode'] == '2v2':
                 continue
-            # if game['participants'] == []:
-            #     continue
-            # if len(game['participants']) != 2:
-            #     continue
-            # if len(game['scores']) != 2:
-            #     continue
             if len(game['opponents']) != 2:
                 continue
             opponents = game['opponents']
