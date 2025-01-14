@@ -41,8 +41,8 @@ def compare_file_snapshots(prev_idx=-2, cur_idx=-1):
 
 
 def compare_snapshots(prev, cur):
-    prev = prev.with_column(
-        pl.when(pl.col("game_name") == "fifa").then("eafc").otherwise(pl.col("game_name")).alias("game_name")
+    prev = prev.with_columns(
+        pl.when(pl.col("game_name") == "fifa").then(pl.lit("ea_sports_fc")).otherwise(pl.col("game_name")).alias("game_name")
     )
     comparison = prev.join(cur, on='game_name', how='inner', suffix="_2")
     summary = comparison.select([
