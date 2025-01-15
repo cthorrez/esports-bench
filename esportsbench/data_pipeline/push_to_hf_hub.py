@@ -13,13 +13,16 @@ def main(version, tag=None, prod=False):
         'match_id': Value('string'),
         'page': Value('string'),
     })
+    disk_version = version
+    if int(float(version)) == float(version):
+        disk_version = str(int(float(version))) # LOL
     dataset = load_dataset(
-        path=f'../../data/final_data_v{version.replace(".", "_")}/parquet',
+        path=f'../../data/final_data_v{disk_version.replace(".", "_")}/parquet',
         data_files= {game_name: f'{game_name}.parquet' for game_name in GAME_NAMES},
         features=features,
     )
     print('Dataset loaded.')
-    dataset.save_to_disk(f'../../data/EsportsBench{version}')
+    dataset.save_to_disk(f'../../data/EsportsBench{disk_version}')
     print('Dataset saved to disk.')
 
     repo_id = 'cthorrez/EsportsBenchTest'
@@ -37,6 +40,6 @@ def main(version, tag=None, prod=False):
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--version', '-v', type=str, default='3.1')
+    parser.add_argument('--version', '-v', type=str, default='4.0')
     parser.add_argument('--prod', action='store_true')
     main(**vars(parser.parse_args()))

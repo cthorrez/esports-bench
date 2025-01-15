@@ -5,7 +5,7 @@ from esportsbench.utils import is_null_or_empty, invalid_date_expr, outcome_from
 
 
 class EAFCDataPipeline(LPDBDataPipeline):
-    """class for ingesting and processing FIFA data from LPDB"""
+    """class for ingesting and processing EA Sports FC data from LPDB"""
 
     game = 'ea_sports_fc'
     version = 'v3'
