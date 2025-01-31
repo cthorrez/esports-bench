@@ -4,16 +4,27 @@ from esportsbench.data_pipeline.data_pipeline import LPDBDataPipeline
 from esportsbench.utils import is_null_or_empty, invalid_date_expr, outcome_from_scores
 
 
+def drop_opponent_extradata(opps):
+    for opp in opps:
+        if 'match2players' in opp:
+            for player in opp['match2players']:
+                if 'extradata' in player:
+                    del player['extradata']
+    return opps
+
 class EAFCDataPipeline(LPDBDataPipeline):
     """class for ingesting and processing EA Sports FC data from LPDB"""
 
     game = 'ea_sports_fc'
     version = 'v3'
-    schema_overrides = {'match2games': json.dumps}
+    schema_overrides = {
+        'match2games': json.dumps,
+        'match2opponents': drop_opponent_extradata #hack
+    }
     request_params_groups = {
         'ea_sports_fc.jsonl': {
             'wiki': 'easportsfc',
-            'query': 'date, match2opponents, winner, resulttype, finished, bestof, match2id, mode, match2games, extradata',
+            'query': 'date, match2opponents, winner, resulttype, finished, bestof, match2id, mode, match2games',
             'conditions': '[[walkover::!1]] AND [[walkover::!2]] AND [[walkover::!ff]] AND [[finished::1]]',
             'order': 'date ASC, match2id ASC',
         }
@@ -142,9 +153,11 @@ class EAFCDataPipeline(LPDBDataPipeline):
         return games_df
 
     def process_data(self):
-        df = pl.scan_ndjson(
-            self.raw_data_dir / 'ea_sports_fc.jsonl', infer_schema_length=100, ignore_errors=True
-        ).collect()
+        df = pl.read_ndjson(
+            self.raw_data_dir / 'ea_sports_fc.jsonl',
+            infer_schema_length=100000,
+            ignore_errors=False
+        )
 
         print(f'initial row count: {df.shape[0]}')
 
