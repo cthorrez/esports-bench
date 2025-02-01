@@ -3,7 +3,6 @@ import polars as pl
 from esportsbench.data_pipeline.data_pipeline import LPDBDataPipeline
 from esportsbench.utils import is_null_or_empty, invalid_date_expr, outcome_from_scores
 
-
 def drop_opponent_extradata(opps):
     for opp in opps:
         if 'match2players' in opp:
@@ -47,53 +46,46 @@ class EAFCDataPipeline(LPDBDataPipeline):
         team_1 = EAFCDataPipeline.parse_team(raw_opponents[0])
         team_2 = EAFCDataPipeline.parse_team(raw_opponents[1])
         return [team_1, team_2]
+    
+    @staticmethod
+    def parse_participant_ids(participants):
+        out = [None, None]
+        for part, data in participants.items():
+            if isinstance(part, str) and ('_' in part):
+                played = data.get('played') if isinstance(data, dict) else (len(participants) == 2)
+                if played:
+                    opid, id = part.split('_')
+                    out[int(opid) - 1] = int(id)
+        return out
 
 
     @staticmethod
     def unpack_team_match(raw_data):
+        global COUNTER
+
         raw_games = raw_data['match2games']
         raw_opponents = raw_data['match2opponents']
         opponents = EAFCDataPipeline.parse_opponents(raw_opponents)
         if opponents[0] == {} or opponents[1] == {}:
             return None
+
         games = json.loads(raw_games)
         outputs = []
         for idx, game in enumerate(games):
             if game['participants'] == []:
                 continue
-            if len(game['participants']) != 2:
-                continue
             if len(game['scores']) != 2:
                 continue
-            participant_keys = sorted(list(game['participants'].keys()))
-            participant_ids = list(map(lambda x: int(x[2]), participant_keys))
-            participant_names = []
-            for pk in participant_keys:
-                parts = game['participants']
-                part = parts[pk]
-                if isinstance(part, dict):
-                    participant_names.append(part.get('name'))
-
-            if 'tbd' in participant_names:
-                continue
+            participant_ids = EAFCDataPipeline.parse_participant_ids(game['participants'])
             if len(participant_ids) != 2:
                 continue
-            if len(participant_names) != 2:
-                continue
+
             player_1_score, player_2_score = map(int, game['scores'])
             outcome = outcome_from_scores(player_1_score, player_2_score)
-            player_1 = participant_names[0]
-            if player_1 is None:
-                if isinstance(opponents[0], dict):
-                    player_1 = opponents[0].get(participant_ids[0])
-                else:
-                    print(opponents[0], participant_ids[0])
-            player_2 = participant_names[1]
-            if player_2 is None:
-                if isinstance(opponents[1], dict):
-                    player_2 = opponents[1].get(participant_ids[1])
-                else:
-                    print(opponents[1], participant_ids[1])
+
+            player_1 = opponents[0].get(participant_ids[0])
+            player_2 = opponents[1].get(participant_ids[1])
+
             if (player_1 is None) or (player_2 is None):
                 continue
             outputs.append(
@@ -169,13 +161,14 @@ class EAFCDataPipeline(LPDBDataPipeline):
 
         team_expr = (
             (pl.col('match2opponents').list.get(0).struct.field('type') == 'team') 
-            | (pl.col('match2opponents').list.get(0).struct.field('type') == 'team')
+            | (pl.col('match2opponents').list.get(1).struct.field('type') == 'team')
         )
+        # team_expr = (pl.col('mode') != '1v1')
         team_df = df.filter(team_expr)
-        print(f'num initial team matches: {len(team_df)}')
-
+        
         df = df.filter(~team_expr)
         print(f'num initial 1v1 matches: {len(df)}')
+        print(f'num initial team matches: {len(team_df)}')
 
 
         # extract player names and scores
