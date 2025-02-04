@@ -82,12 +82,12 @@ def run_benchmark(
 
             for rating_system_key in rating_system_keys:
                 print(f'\nEvaluating {rating_system_key} on {game_short_name}')
-                rating_system_name = hyperparameter_config[game_short_name][rating_system_key].get('model', rating_system_key)
-                rating_system_class = RATING_SYSTEM_NAME_CLASS_MAP[rating_system_name]
                 params = {}
                 if hyperparameter_config == 'default':
                     print('No hyperparameter config specified, using class default hyperparameters')
+                    rating_system_name = rating_system_key
                 elif isinstance(hyperparameter_config, str):
+                    rating_system_name = hyperparameter_config[game_short_name][rating_system_key].get('model', rating_system_key)
                     params_path = f'{hyperparameter_config}/{game_short_name}/{rating_system_name}.json'
                     if os.path.exists(params_path):
                         params = json.load(open(params_path))['best_params']
@@ -103,6 +103,7 @@ def run_benchmark(
                     print(hyperparameter_config)
                     raise ValueError('Expected config to be either a path or a dict')
                 if 'model' in params: del params['model']
+                rating_system_class = RATING_SYSTEM_NAME_CLASS_MAP[rating_system_name]
                 yield (game_name, rating_system_key, dataset, rating_system_class, params, test_mask)
             
     pool = multiprocessing.Pool(processes=num_processes)
@@ -152,16 +153,15 @@ if __name__ == '__main__':
     )
     parser.add_argument('-dd', '--drop_draws', action='store_true')
     parser.add_argument('-rp', '--rating_period', type=str, required=False, default='7D')
-    parser.add_argument('--train_end_date', type=str, default='2023-03-31', help='inclusive end date for test set')
-    parser.add_argument('--test_end_date', type=str, default='2024-03-31', help='inclusive end date for test set')
-    parser.add_argument('-d', '--data_dir', type=str, default='hf_data/v1_0')
+    parser.add_argument('--train_end_date', type=str, default='2023-12-31', help='inclusive end date for test set')
+    parser.add_argument('--test_end_date', type=str, default='2024-12-31', help='inclusive end date for test set')
+    parser.add_argument('-d', '--data_dir', type=str, default='final_data_v4')
     parser.add_argument('-c', '--hyperparameter_config', type=str, required=False, default='default')
     parser.add_argument('-np', '--num_processes', type=int, default=8)
     args = parser.parse_args()
 
     results = run_benchmark(
         args.games,
-        args.rating_systems,
         args.rating_period,
         train_end_date=args.train_end_date,
         test_end_date=args.test_end_date,

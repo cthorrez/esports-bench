@@ -2,7 +2,7 @@
 import pathlib
 import numpy as np
 import polars as pl
-from riix.utils.data_utils import MatchupDataset
+from riix.utils.data_utils import TimedPairDataset
 from esportsbench.constants import GAME_NAME_MAP
 
 BASE_DATA_DIR = pathlib.Path(__file__).resolve().parents[1] / 'data' 
@@ -29,7 +29,7 @@ def load_dataset(
     test_mask = (df['date'].cast(pl.Utf8) > train_end_date) & (df['date'].cast(pl.Utf8) <= test_end_date)
     train_rows = int(train_mask.sum())
     test_rows = int(test_mask.sum())
-    dataset = MatchupDataset(
+    dataset = TimedPairDataset(
         df=df,
         competitor_cols=['competitor_1', 'competitor_2'],
         outcome_col='outcome',
