@@ -341,3 +341,12 @@ class LPDBDataPipeline(DataPipeline):
         )
 
         return games_df
+    
+    @staticmethod
+    def drop_opponent_extradata(opps):
+        for opp in opps:
+            if 'match2players' in opp:
+                for player in opp['match2players']:
+                    if 'extradata' in player:
+                        del player['extradata']
+        return opps

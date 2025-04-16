@@ -8,6 +8,9 @@ class CounterStrikeDataPipeline(LPDBDataPipeline):
 
     game = 'counterstrike'
     version = 'v3'
+    schema_overrides = {
+        'match2opponents': LPDBDataPipeline.drop_opponent_extradata
+    }
     request_params_groups = {
         'counterstrike.jsonl': {
             'wiki': 'counterstrike',

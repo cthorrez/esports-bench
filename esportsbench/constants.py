@@ -38,6 +38,7 @@ GAME_NAME_MAP = {
     'tek': 'tekken',
     'kof': 'king_of_fighters',
     'gg': 'guilty_gear',
+    'fifa': 'ea_sports_fc',
     'eafc': 'ea_sports_fc',
 }
 
@@ -55,6 +56,7 @@ OFFICIAL_NAME_MAP = {
     'king_of_fighters': 'King of Fighters',
     'guilty_gear': 'Guilty Gear',
     'tetris': 'Tetris',
+    'fifa': 'EA Sports FC', 
     'ea_sports_fc': 'EA Sports FC', 
     'rocket_league': 'Rocket League',
     'dota2': 'Dota 2',
@@ -86,7 +88,7 @@ RATING_SYSTEM_NAME_CLASS_MAP = {
     # 'ork': OnlineRaoKupper,
     # 'elod': EloDavidson,
     # 'elom': EloMentum,
-    'yuksel': Yuksel2024,
+    # 'yuksel': Yuksel2024,
     # 'autograd' : AutogradRatingSystem
     'random_base' : partial(BaselineRatingSystem, mode='random'),
     'wr_base' : partial(BaselineRatingSystem, mode='win_rate'),

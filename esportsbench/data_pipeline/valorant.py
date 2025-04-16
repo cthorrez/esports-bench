@@ -92,6 +92,7 @@ class ValorantDataPipeline(LPDBDataPipeline):
             .otherwise(None)
             .alias('outcome')
         )
+        df = self.filter_invalid(df, is_null_or_empty(pl.col('outcome')), 'missing_outcome')
 
         # best of 1 logic, score is initially in rounds so set it to be game score
         # team_1_score is the same as outcome, team_2_score is 1 - outcome

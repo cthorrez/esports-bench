@@ -3,13 +3,6 @@ import polars as pl
 from esportsbench.data_pipeline.data_pipeline import LPDBDataPipeline
 from esportsbench.utils import is_null_or_empty, invalid_date_expr, outcome_from_scores
 
-def drop_opponent_extradata(opps):
-    for opp in opps:
-        if 'match2players' in opp:
-            for player in opp['match2players']:
-                if 'extradata' in player:
-                    del player['extradata']
-    return opps
 
 class EAFCDataPipeline(LPDBDataPipeline):
     """class for ingesting and processing EA Sports FC data from LPDB"""
@@ -18,7 +11,7 @@ class EAFCDataPipeline(LPDBDataPipeline):
     version = 'v3'
     schema_overrides = {
         'match2games': json.dumps,
-        'match2opponents': drop_opponent_extradata #hack
+        'match2opponents': LPDBDataPipeline.drop_opponent_extradata
     }
     request_params_groups = {
         'ea_sports_fc.jsonl': {

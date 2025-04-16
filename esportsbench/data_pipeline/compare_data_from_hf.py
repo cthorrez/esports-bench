@@ -1,8 +1,5 @@
-import os
 import argparse
-import pathlib
 from datasets import load_dataset
-from datasets import DownloadMode
 
 def main(va, vb):
     dataset_a = load_dataset(
@@ -28,7 +25,7 @@ def main(va, vb):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-va', default='3.0')
-    parser.add_argument('-vb', default='4.0')
+    parser.add_argument('-va', default='4.0')
+    parser.add_argument('-vb', default='5.0')
     args = parser.parse_args()
     main(args.va, args.vb)

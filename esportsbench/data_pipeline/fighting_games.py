@@ -4,9 +4,53 @@ from esportsbench.utils import invalid_date_expr
 
 # info from https://liquipedia.net/fighters/Module:Info alphabetical order
 GAME_CONFIG = {
-    'street_fighter': {'SFxT', 'sf6', 'sfa2', 'sfa3', 'sfii', 'sfiii', 'sfiii3s', 'sfiit', 'sfiv', 'sfv', 'sfxt'},
-    'tekken': {'t4', 't5', 't6', 't7', 't8', 'ttt', 'ttt2', 'tvc'},
-    'guilty_gear': {'GGXrd', 'ggst', 'ggxrd', 'ggxx', 'ggxxacpr'},
+    'street_fighter': {
+        'hsfii',
+        'SFxT',
+        'sf6',
+        'sfa2',
+        'sfa3',
+        'sfii',
+        'sfiii',
+        'sfiiis',
+        'sfiii3s',
+        'sfiit',
+        'sfiv',
+        'sfv',
+        'sfvce',
+        'sfxt',
+        'ssfiit',
+        'ssfiithdr',
+        'ssfiv',
+        'ssfivae',
+        'usfiv',
+        'sfvae'
+    },
+    'tekken': {
+        't4',
+        't5',
+        't5dr',
+        't6',
+        't7',
+        't8',
+        'ttt',
+        'ttt2',
+        'tvc',
+        'SFxT'
+    },
+    'guilty_gear': {
+        'gg',
+        'ggx2r',
+        'GGXrd',
+        'ggst',
+        'ggxrd',
+        'ggxrdr',
+        'ggxrdr2',
+        'ggxx',
+        'ggxxs',
+        'ggxxacp',
+        'ggxxacpr'
+    },
     'king_of_fighters': {
         'KoFXV',
         'kof2002',

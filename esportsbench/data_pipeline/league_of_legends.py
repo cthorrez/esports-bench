@@ -70,6 +70,9 @@ class LeaugeOfLegendsDataPipeline(DataPipeline):
         played_self_expr = pl.col('Team1') == pl.col('Team2')
         df = self.filter_invalid(df, played_self_expr, 'played_self')
 
+        bye_expr = (pl.col('Team1').str.to_lowercase() == 'bye') | (pl.col('Team2').str.to_lowercase() == 'bye')
+        df = self.filter_invalid(df, bye_expr, 'bye')
+
         df = df.with_columns(
             pl.when(pl.col('Winner') == '1')
             .then(1.0)

@@ -8,6 +8,9 @@ class CallOfDutyDataPipeline(LPDBDataPipeline):
 
     game = 'call_of_duty'
     version = 'v3'
+    schema_overrides = {
+        'match2opponents': LPDBDataPipeline.drop_opponent_extradata
+    }
     request_params_groups = {
         'call_of_duty.jsonl': {
             'wiki': 'callofduty',

@@ -10,8 +10,6 @@ from esportsbench.datasets import load_dataset
 from esportsbench.constants import GAME_NAME_MAP, ALL_RATING_SYSTEM_NAMES, RATING_SYSTEM_NAME_CLASS_MAP
 
 
-
-
 def add_mean_metrics(data_dict):
     """get overall mean for each rating system and metric at the game level"""
     # Initialize a structure to store sum and counts for calculating means
@@ -87,7 +85,7 @@ def run_benchmark(
                     print('No hyperparameter config specified, using class default hyperparameters')
                     rating_system_name = rating_system_key
                 elif isinstance(hyperparameter_config, str):
-                    rating_system_name = hyperparameter_config[game_short_name][rating_system_key].get('model', rating_system_key)
+                    rating_system_name = rating_system_key
                     params_path = f'{hyperparameter_config}/{game_short_name}/{rating_system_name}.json'
                     if os.path.exists(params_path):
                         params = json.load(open(params_path))['best_params']
@@ -107,7 +105,9 @@ def run_benchmark(
                 yield (game_name, rating_system_key, dataset, rating_system_class, params, test_mask)
             
     pool = multiprocessing.Pool(processes=num_processes)
+    # eval_results = map(eval_func, eval_iterator()) # for debugging, better error messages without multiprocessing
     eval_results = pool.imap(eval_func, eval_iterator())
+
     for game_name, rating_system_name, metrics in eval_results:
         results[game_name][rating_system_name] = metrics
 
@@ -153,9 +153,9 @@ if __name__ == '__main__':
     )
     parser.add_argument('-dd', '--drop_draws', action='store_true')
     parser.add_argument('-rp', '--rating_period', type=str, required=False, default='7D')
-    parser.add_argument('--train_end_date', type=str, default='2023-12-31', help='inclusive end date for test set')
-    parser.add_argument('--test_end_date', type=str, default='2024-12-31', help='inclusive end date for test set')
-    parser.add_argument('-d', '--data_dir', type=str, default='final_data_v4')
+    parser.add_argument('--train_end_date', type=str, default='2024-03-31', help='inclusive end date for test set')
+    parser.add_argument('--test_end_date', type=str, default='2025-03-31', help='inclusive end date for test set')
+    parser.add_argument('-d', '--data_dir', type=str, default='final_data_v5')
     parser.add_argument('-c', '--hyperparameter_config', type=str, required=False, default='default')
     parser.add_argument('-np', '--num_processes', type=int, default=8)
     args = parser.parse_args()
