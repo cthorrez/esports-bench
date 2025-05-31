@@ -38,7 +38,7 @@ GAME_NAME_MAP = {
     'tek': 'tekken',
     'kof': 'king_of_fighters',
     'gg': 'guilty_gear',
-    'fifa': 'ea_sports_fc',
+    # 'fifa': 'ea_sports_fc',
     'eafc': 'ea_sports_fc',
 }
 
