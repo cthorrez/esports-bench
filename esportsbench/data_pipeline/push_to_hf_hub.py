@@ -40,6 +40,6 @@ def main(version, tag=None, prod=False):
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--version', '-v', type=str, default='5.0')
+    parser.add_argument('--version', '-v', type=str, default='6.0')
     parser.add_argument('--prod', action='store_true')
     main(**vars(parser.parse_args()))
