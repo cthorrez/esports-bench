@@ -1,6 +1,8 @@
+import os
 import json
 import polars as pl
 import requests
+from esportsbench.utils import is_null_or_empty
 from esportsbench.data_pipeline.data_pipeline import DataPipeline
 
 
@@ -23,6 +25,26 @@ class LeaugeOfLegendsDataPipeline(DataPipeline):
 
     def __init__(self, rows_per_request=500, timeout=2.0, **kwargs):
         super().__init__(rows_per_request=rows_per_request, timeout=timeout, **kwargs)
+        username = os.getenv("LEAGUEPEDIA_USERNAME")
+        password = os.getenv("LEAGUEPEDIA_PASSWORD")
+
+        S = requests.Session()
+        api = self.base_url
+        r1 = S.get(api, params={"action": "query", "meta": "tokens", "type": "login", "format": "json"})
+        token = r1.json()["query"]["tokens"]["logintoken"]
+        r2 = S.post(
+            api,
+            data={
+                "action": "login",
+                "lgname": username,
+                "lgpassword": password,
+                "lgtoken": token,
+                "format": "json",
+            },
+        )
+        r2.raise_for_status()
+        assert r2.json()["login"]["result"] == "Success", f"Login failed: {r2.json()}"
+        self.session = S
         self.rows_per_request = rows_per_request
 
     def get_request_iterator(self, request_params):
@@ -34,8 +56,7 @@ class LeaugeOfLegendsDataPipeline(DataPipeline):
                 request_params['offset'] = offset
                 offset += self.rows_per_request
                 request = requests.Request(method='GET', url=self.base_url, params=request_params)
-                prepared_request = request.prepare()
-                yield prepared_request
+                yield self.session.prepare_request(request)
 
         return iter(request_iterator())
 
@@ -57,14 +78,9 @@ class LeaugeOfLegendsDataPipeline(DataPipeline):
 
         # if the team name redirects, replace the original name with the redirect
         df = df.with_columns(
-            pl.when(pl.col('Team1Redirect').is_not_null())
-            .then(pl.col('Team1Redirect'))
-            .otherwise(pl.col('Team1'))
-            .alias('Team1'),
-            pl.when(pl.col('Team2Redirect').is_not_null())
-            .then(pl.col('Team2Redirect'))
-            .otherwise(pl.col('Team2'))
-            .alias('Team2'),
+            pl.when((~is_null_or_empty('Team1Final')) & is_null_or_empty('Team1')).then(pl.col('Team1Final')).otherwise(pl.col('Team1')).alias('Team1'),
+            pl.when((~is_null_or_empty('Team2Final')) & is_null_or_empty('Team2')).then(pl.col('Team2Final')).otherwise(pl.col('Team2')).alias('Team2'),
+
         )
 
         played_self_expr = pl.col('Team1') == pl.col('Team2')
@@ -91,8 +107,8 @@ class LeaugeOfLegendsDataPipeline(DataPipeline):
                 pl.col('DateTime UTC').alias('date'),
                 pl.col('Team1').alias('competitor_1'),
                 pl.col('Team2').alias('competitor_2'),
-                pl.col('Team1Score').cast(pl.Float64).alias('competitor_1_score'),
-                pl.col('Team2Score').cast(pl.Float64).alias('competitor_2_score'),
+                pl.col('Team1Score').cast(pl.Float64, strict=False).fill_null(-1).alias('competitor_1_score'),
+                pl.col('Team2Score').cast(pl.Float64, strict=False).fill_null(-1).alias('competitor_2_score'),
                 'outcome',
                 pl.col('MatchId').alias('match_id'),
                 (pl.lit('https://lol.fandom.com/wiki/') + pl.col('OverviewPage').str.replace_all('\s', '_')).alias('page'),

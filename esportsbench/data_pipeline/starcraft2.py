@@ -46,6 +46,10 @@ class Starcraft2DataPipeline(DataPipeline):
         response_text = response.text
         response_json = json.loads(response_text)
         objects = response_json['objects']
+        objects = [
+            {k: v for k, v in obj.items() if k in {'id' ,'pla', 'plb', 'sca', 'scb', 'eventobj', 'date'}}
+            for obj in objects
+        ]
         is_done = len(objects) < self.rows_per_request
         return objects, is_done
 

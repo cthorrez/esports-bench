@@ -9,6 +9,9 @@ class RainbowSixDataPipeline(LPDBDataPipeline):
 
     game = 'rainbow_six'
     version = 'v3'
+    schema_overrides = {
+        'match2opponents': LPDBDataPipeline.drop_opponent_extradata
+    }
     request_params_groups = {
         'rainbow_six.jsonl': {
             'wiki': 'rainbowsix',
@@ -26,8 +29,8 @@ class RainbowSixDataPipeline(LPDBDataPipeline):
     def process_data(self):
         df = pl.read_ndjson(
             self.raw_data_dir / 'rainbow_six.jsonl',
-            infer_schema_length=10000,
-            ignore_errors=True
+            infer_schema_length=89000,
+            ignore_errors=False
         )
 
         print(f'initial row count: {df.shape[0]}')
