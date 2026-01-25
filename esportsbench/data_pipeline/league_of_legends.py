@@ -76,12 +76,25 @@ class LeaugeOfLegendsDataPipeline(DataPipeline):
         df = pl.scan_ndjson(self.raw_data_dir / 'league_of_legends.jsonl', infer_schema_length=1).collect()
         print(f'initial row count: {df.shape[0]}')
 
-        # if the team name redirects, replace the original name with the redirect
+        # Apply redirect logic with fallback chain
         df = df.with_columns(
-            pl.when((~is_null_or_empty('Team1Final')) & is_null_or_empty('Team1')).then(pl.col('Team1Final')).otherwise(pl.col('Team1')).alias('Team1'),
-            pl.when((~is_null_or_empty('Team2Final')) & is_null_or_empty('Team2')).then(pl.col('Team2Final')).otherwise(pl.col('Team2')).alias('Team2'),
-
+            # Use redirect if available, else use final name, else use original team name
+            pl.coalesce(
+                pl.when(~is_null_or_empty('Team1Redirect')).then(pl.col('Team1Redirect')),
+                pl.when(~is_null_or_empty('Team1Final')).then(pl.col('Team1Final')),
+                pl.col('Team1')
+            ).alias('Team1'),
+            pl.coalesce(
+                pl.when(~is_null_or_empty('Team2Redirect')).then(pl.col('Team2Redirect')),
+                pl.when(~is_null_or_empty('Team2Final')).then(pl.col('Team2Final')),
+                pl.col('Team2')
+            ).alias('Team2'),
         )
+
+        # Filter out rows where team names are still empty after all fallbacks
+        empty_team_expr = is_null_or_empty('Team1') | is_null_or_empty('Team2')
+        df = self.filter_invalid(df, empty_team_expr, 'empty_team_name')
+
 
         played_self_expr = pl.col('Team1') == pl.col('Team2')
         df = self.filter_invalid(df, played_self_expr, 'played_self')

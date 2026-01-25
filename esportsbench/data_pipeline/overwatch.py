@@ -8,6 +8,9 @@ class OverwatchDataPipeline(LPDBDataPipeline):
 
     game = 'overwatch'
     version = 'v3'
+    schema_overrides = {
+        'match2opponents': LPDBDataPipeline.drop_opponent_extradata
+    }
     request_params_groups = {
         'overwatch.jsonl': {
             'wiki': 'overwatch',
@@ -22,7 +25,8 @@ class OverwatchDataPipeline(LPDBDataPipeline):
         super().__init__(rows_per_request=rows_per_request, timeout=timeout, **kwargs)
 
     def process_data(self):
-        df = pl.scan_ndjson(self.raw_data_dir / 'overwatch.jsonl', infer_schema_length=100000).collect()
+        df = pl.read_ndjson(self.raw_data_dir / 'overwatch.jsonl', infer_schema_length=100000)
+        
         print(f'initial row count: {df.shape[0]}')
 
         df = self.filter_invalid(df, invalid_date_expr, 'invalid_date')

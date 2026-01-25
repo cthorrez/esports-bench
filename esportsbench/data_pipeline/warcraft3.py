@@ -82,7 +82,8 @@ class Warcraft3DataPipeline(LPDBDataPipeline):
         df = self.filter_invalid(df, missing_player_expr, 'missing_player')
 
         did_not_play_expr = (
-            (pl.col('player_1_score') == 0) & (pl.col('player_2_score') == 0) & is_null_or_empty('winner')
+            ((pl.col('player_1_score') == 0) & (pl.col('player_2_score') == 0) & is_null_or_empty('winner'))
+            | (pl.col('resulttype').str.to_lowercase() == 'ff')
         )
         df = self.filter_invalid(df, did_not_play_expr, 'did_not_play')
 
