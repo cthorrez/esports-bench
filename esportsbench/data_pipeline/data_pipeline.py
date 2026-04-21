@@ -95,7 +95,12 @@ class DataPipeline(ABC):
         """main ingestion method. Makes requests from the iterate_requests methods, processes the
         results and writes the raw data to disk.
         """
-        sess = CachedSession(self.cache_path, backend='sqlite', allowable_methods=('GET', 'POST'))
+        sess = CachedSession(
+            self.cache_path,
+            backend='sqlite',
+            allowable_methods=('GET', 'POST'),
+            ignored_parameters=['Authorization', 'X-API-KEY', 'access_token', 'api_key', 'apikey'],
+        )
         output_path = self.raw_data_dir / filename
         with open(output_path, 'w', encoding='utf8') as out_file:
             num_rows = 0
@@ -142,6 +147,20 @@ class DataPipeline(ABC):
                     sess.cache.delete(request_key)
         sess.close()
         print(f'wrote {num_rows} to {output_path}')
+
+    def migrate_cache(self):
+        """Re-key all existing cache entries to exclude API key params from the cache key.
+        Call this once after switching to a new API key.
+        """
+        sess = CachedSession(
+            self.cache_path,
+            backend='sqlite',
+            allowable_methods=('GET', 'POST'),
+            ignored_parameters=['Authorization', 'X-API-KEY', 'access_token', 'api_key', 'apikey'],
+        )
+        sess.cache.recreate_keys()
+        sess.close()
+        print(f'Cache migration complete for {self.cache_path}')
 
     def process_and_write(self):
         df = self.process_data()
