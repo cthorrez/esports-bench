@@ -76,3 +76,16 @@ The StarCraft II data is from [Aligulac](http://aligulac.com/)
 The League of Legends data is from [Leaguepedia](https://lol.fandom.com/) under a [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/)
 
 The data for all other games is from [Liquipedia](https://liquipedia.net/) under a [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/)
+
+## Citation
+If you use EsportsBench in your research, please cite the paper ([PDF](esportsbench_preprint.pdf)):
+
+```bibtex
+@article{thorrez2024esportsbench,
+  title={EsportsBench: A Collection of Datasets for Benchmarking Rating Systems in Esports},
+  author={Thorrez, Clayton},
+  year={2024},
+  note={Preprint},
+  url={https://cthorrez.github.io/papers/esportsbench/EsportsBench_preprint.pdf}
+}
+```

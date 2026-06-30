@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use EsportsBench, please cite the paper below."
+title: "EsportsBench: A Collection of Datasets for Benchmarking Rating Systems in Esports"
+authors:
+  - family-names: Thorrez
+    given-names: Clayton
+    email: claytonthorrez@gmail.com
+url: "https://github.com/cthorrez/esports-bench"
+repository-code: "https://github.com/cthorrez/esports-bench"
+preferred-citation:
+  type: article
+  title: "EsportsBench: A Collection of Datasets for Benchmarking Rating Systems in Esports"
+  authors:
+    - family-names: Thorrez
+      given-names: Clayton
+      email: claytonthorrez@gmail.com
+  year: 2024
+  notes: "Preprint."
+  url: "https://cthorrez.github.io/papers/esportsbench/EsportsBench_preprint.pdf"
