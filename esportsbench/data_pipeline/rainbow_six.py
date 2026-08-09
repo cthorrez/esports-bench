@@ -16,7 +16,7 @@ class RainbowSixDataPipeline(LPDBDataPipeline):
         'rainbow_six.jsonl': {
             'wiki': 'rainbowsix',
             'query': 'date, match2opponents, winner, resulttype, finished, bestof',
-            'conditions': '[[mode::team]] AND [[game::siege]] AND [[walkover::!1]] AND [[walkover::!2]] AND [[walkover::!ff]] AND [[finished::1]]',
+            'conditions': '[[mode::team]] AND ([[game::siege]] OR [[game::siegex]]) AND [[walkover::!1]] AND [[walkover::!2]] AND [[walkover::!ff]] AND [[finished::1]]',
             'order': 'date ASC, match2id ASC',
         }
     }
