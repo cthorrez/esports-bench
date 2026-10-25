@@ -3,7 +3,7 @@ import os
 import pathlib
 import json
 import warnings
-from collections import defaultdict
+from collections import defaultdict, Counter
 from contextlib import ExitStack
 from functools import lru_cache
 from multiprocessing import get_context
@@ -64,8 +64,8 @@ def load_train_dataset(game, **dataset_kwargs):
 
 
 def sweep_one(job):
-    """run every param configuration for one (game, rating system) and return the best"""
-    game, rating_system_key, rating_system_name, param_configurations, dataset_kwargs = job
+    """run a chunk of param configurations for one (game, rating system) and return the best"""
+    game, rating_system_key, rating_system_name, chunk_idx, param_configurations, dataset_kwargs = job
     dataset = load_train_dataset(game, **dataset_kwargs)
     best_params, best_metrics = grid_search(
         rating_system_class=RATING_SYSTEM_NAME_CLASS_MAP[rating_system_name],
@@ -78,7 +78,16 @@ def sweep_one(job):
         # this is far faster than a pool per sweep where every worker recompiles
         num_processes=None,
     )
-    return game, rating_system_key, best_params, best_metrics
+    return game, rating_system_key, chunk_idx, best_params, best_metrics
+
+
+def best_of_chunks(chunk_results, metric='log_loss'):
+    """the best (params, metrics) across chunks, the first minimum wins like grid_search"""
+    best_params, best_metrics = {}, {}
+    for params, metrics in chunk_results:
+        if metrics and (not best_metrics or metrics[metric] < best_metrics[metric]):
+            best_params, best_metrics = params, metrics
+    return best_params, best_metrics
 
 
 def sweep(
@@ -93,8 +102,13 @@ def sweep(
     num_samples=100,
     num_processes=8,
     rating_systems='all',
+    configs_per_job=100,
 ):
-    """sweep hyperparameters for each (game, rating system) pair, running num_processes pairs in parallel"""
+    """sweep hyperparameters for each (game, rating system) pair
+
+    each pair's configurations are split into jobs of configs_per_job and num_processes jobs run in parallel,
+    so a rating system which is slow per configuration doesn't leave one process running long after the rest
+    """
     sweep_results = defaultdict(dict)
     results_dir = pathlib.Path(__file__).parents[1] / 'experiments' / 'conf' / 'sweep_results' / f'{granularity}_sweep_{rating_period}_{num_samples}'
     dataset_kwargs = {
@@ -119,12 +133,15 @@ def sweep(
             param_configurations = construct_param_configurations(
                 param_configs=game_sweep_config[rating_system_key], num_samples=num_samples
             )
-            jobs.append((game, rating_system_key, rating_system_name, param_configurations, dataset_kwargs))
+            for chunk_idx, start in enumerate(range(0, len(param_configurations), configs_per_job)):
+                chunk = param_configurations[start:start + configs_per_job]
+                jobs.append((game, rating_system_key, rating_system_name, chunk_idx, chunk, dataset_kwargs))
+    num_chunks = Counter((job[0], job[1]) for job in jobs)
 
     # biggest games first so the long sweeps don't end up running alone at the end
     data_path = BASE_DATA_DIR / data_dir / 'parquet'
     jobs.sort(key=lambda job: os.path.getsize(data_path / f'{GAME_NAME_MAP.get(job[0], job[0])}.parquet'), reverse=True)
-    print(f'Sweeping {len(jobs)} (game, rating system) pairs over {num_samples} configurations each')
+    print(f'Sweeping {len(num_chunks)} (game, rating system) pairs over {num_samples} configurations each in {len(jobs)} jobs')
 
     with ExitStack() as stack:
         if num_processes > 1:
@@ -134,8 +151,15 @@ def sweep(
         else:
             results = map(sweep_one, jobs)
 
-        for idx, (game, rating_system_key, best_params, best_metrics) in enumerate(results):
-            print(f'[{idx + 1}/{len(jobs)}] {game} {rating_system_key}: {round_dict(best_metrics)} {round_dict(best_params)}')
+        chunk_results = defaultdict(dict)
+        for game, rating_system_key, chunk_idx, chunk_params, chunk_metrics in results:
+            pair_results = chunk_results[(game, rating_system_key)]
+            pair_results[chunk_idx] = (chunk_params, chunk_metrics)
+            if len(pair_results) < num_chunks[(game, rating_system_key)]:
+                continue
+            best_params, best_metrics = best_of_chunks(pair_results[idx] for idx in sorted(pair_results))
+            num_done = sum(len(r) == num_chunks[pair] for pair, r in chunk_results.items())
+            print(f'[{num_done}/{len(num_chunks)}] {game} {rating_system_key}: {round_dict(best_metrics)} {round_dict(best_params)}')
             out_dict = {'best_params': best_params.copy(), 'best_metrics': best_metrics.copy()}
             out_dir = results_dir / game
             os.makedirs(out_dir, exist_ok=True)
