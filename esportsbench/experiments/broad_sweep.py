@@ -1,13 +1,12 @@
 import warnings
-import hydra
 from omegaconf import DictConfig
+from esportsbench.eval.experiment_config import load_config
 from esportsbench.eval.sweep import sweep
 from esportsbench.constants import GAME_SHORT_NAMES
 
 # Suppress overflow warnings since many of the combinations swept over are expected to be numerically unstable
 warnings.filterwarnings('ignore', category=RuntimeWarning)
 
-@hydra.main(version_base=None, config_path="conf", config_name="config")
 def main(config: DictConfig):
     if config.games == 'all':
         games = GAME_SHORT_NAMES
@@ -16,7 +15,7 @@ def main(config: DictConfig):
 
     sweep(
         games=games,
-        rating_systems=config.rating_systems,
+        rating_systems=config.get('rating_systems', 'all'),
         data_dir=config.data_dir,
         granularity='broad',
         sweep_config=config.broad_sweep_config,
@@ -28,4 +27,4 @@ def main(config: DictConfig):
     )
 
 if __name__ == '__main__':
-    main()
+    main(load_config())

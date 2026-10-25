@@ -2,7 +2,7 @@
 import json
 import polars as pl
 from esportsbench.data_pipeline.data_pipeline import LPDBDataPipeline
-from esportsbench.utils import is_null_or_empty, invalid_date_expr, debug_ndjson
+from esportsbench.utils import is_null_or_empty, invalid_date_expr
 
 
 class RocketLeagueDataPipeline(LPDBDataPipeline):

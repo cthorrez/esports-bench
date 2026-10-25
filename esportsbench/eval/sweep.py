@@ -4,7 +4,6 @@ import pathlib
 import json
 import warnings
 from collections import defaultdict
-from typing import Dict
 import numpy as np
 from riix.eval import grid_search
 from esportsbench.datasets import load_dataset
@@ -63,6 +62,7 @@ def sweep(
     drop_draws=False,
     num_samples=100,
     num_processes=8,
+    rating_systems='all',
 ):
     sweep_results = defaultdict(dict)
     results_dir = pathlib.Path(__file__).parents[1] / 'experiments' / 'conf' / 'sweep_results' / f'{granularity}_sweep_{rating_period}_{num_samples}'
@@ -88,8 +88,15 @@ def sweep(
         elif granularity == 'fine':
             game_sweep_config = sweep_config[dataset_name]
 
-        for rating_system_key in game_sweep_config.keys():
+        rating_system_keys = list(game_sweep_config.keys())
+        if rating_systems != 'all':
+            rating_system_keys = [key for key in rating_system_keys if key in rating_systems]
+
+        for rating_system_key in rating_system_keys:
             rating_system_name = game_sweep_config[rating_system_key]['model']
+            if rating_system_name not in RATING_SYSTEM_NAME_CLASS_MAP:
+                print(f'Skipping {rating_system_key}: model {rating_system_name} is not in RATING_SYSTEM_NAME_CLASS_MAP')
+                continue
             print(f'Sweeping {rating_system_key} on {dataset_name} over {num_samples} configurations')
             rating_system_class = RATING_SYSTEM_NAME_CLASS_MAP[rating_system_name]
             param_configurations = construct_param_configurations(

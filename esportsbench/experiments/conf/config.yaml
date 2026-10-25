@@ -8,6 +8,10 @@ rating_period: '7D'
 num_samples: 16
 num_processes: 16
 games: ['tetris', 'halo']
+# 'all' or a list of keys from broad_sweep_config, e.g. ['elo', 'glicko']
+rating_systems: 'all'
+# fine sweep only: broad sweep results to refine, relative to conf/sweep_results
+sweep_results_path: 'broad_sweep_${rating_period}_1000'
 
 # this will load the values from the listed file
 defaults:

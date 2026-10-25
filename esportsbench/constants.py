@@ -7,15 +7,8 @@ from riix.models.trueskill import TrueSkill
 from riix.models.weng_lin import WengLin
 from riix.models.melo import Melo
 from riix.models.gen_elo import GenElo
-from riix.models.constant_variance_glicko import ConstantVarianceGlicko
 from riix.models.velo import vElo
-from riix.models.online_disc_decomp import OnlineDiscDecomp
-from riix.models.online_rao_kupper import OnlineRaoKupper
-from riix.models.elo_davidson import EloDavidson
 from riix.models.skf import VSKF
-from riix.models.elomentum import EloMentum
-from riix.models.yuksel_2024 import Yuksel2024
-from riix.models.autograd_rating_system import AutogradRatingSystem
 from riix.models.baselines import BaselineRatingSystem
 
 GAME_NAME_MAP = {
