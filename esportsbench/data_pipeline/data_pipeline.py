@@ -17,6 +17,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 from dotenv import load_dotenv
 from esportsbench.utils import is_null_or_empty, outcome_from_scores, invalid_date_expr
+from esportsbench.paths import DATA_DIR
 
 
 def make_session():
@@ -79,7 +80,7 @@ class DataPipeline(ABC):
         self.max_rows = max_rows
         self.session = make_session()
 
-        data_dir = Path(__file__).resolve().parents[2] / 'data'
+        data_dir = DATA_DIR
         self.raw_data_dir = data_dir / 'raw_data'
         self.invalid_data_dir = data_dir / 'invalid_data' / self.game
         self.full_data_dir = data_dir / 'full_data'

@@ -2,13 +2,13 @@ import os
 import argparse
 from datetime import datetime
 import polars as pl
-import pathlib
+from esportsbench.paths import DATA_DIR
 
 pl.Config.set_tbl_rows(100)
 
 
 def postprocess(train_end_date, test_end_date, min_rows_year, version):
-    data_dir = pathlib.Path(__file__).resolve().parents[2] / 'data'
+    data_dir = DATA_DIR
     input_file_paths = sorted(data_dir.glob('full_data/parquet/*'))
     print('')
     for input_file_path in input_file_paths:
@@ -84,9 +84,10 @@ def postprocess(train_end_date, test_end_date, min_rows_year, version):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--train_end_date', type=str, default='2025-09-30', help='inclusive end date for test set')
-    parser.add_argument('--test_end_date', type=str, default='2026-09-30', help='inclusive end date for test set')
+    # python -m esportsbench.release fills these in for a new release
+    parser.add_argument('--train_end_date', type=str, required=True, help='inclusive end date for train set')
+    parser.add_argument('--test_end_date', type=str, required=True, help='inclusive end date for test set')
     parser.add_argument('--min_rows_year', type=int, default=100, help='minmum number of rows in a year to begin including data')
-    parser.add_argument('--version', '-v', type=str, default='11', help='which version of the dataset')
+    parser.add_argument('--version', '-v', type=int, required=True, help='which version of the dataset')
     args = vars(parser.parse_args())
     postprocess(**args)

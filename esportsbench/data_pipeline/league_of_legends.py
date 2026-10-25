@@ -2,6 +2,7 @@ import os
 import json
 import polars as pl
 import requests
+from dotenv import load_dotenv
 from esportsbench.utils import is_null_or_empty
 from esportsbench.data_pipeline.data_pipeline import DataPipeline, make_session
 
@@ -29,8 +30,11 @@ class LeaugeOfLegendsDataPipeline(DataPipeline):
 
     def __init__(self, rows_per_request=500, timeout=2.0, **kwargs):
         super().__init__(rows_per_request=rows_per_request, timeout=timeout, **kwargs)
+        load_dotenv()
         username = os.getenv("LEAGUEPEDIA_USERNAME")
         password = os.getenv("LEAGUEPEDIA_PASSWORD")
+        if username is None or password is None:
+            raise EnvironmentError('LEAGUEPEDIA_USERNAME and LEAGUEPEDIA_PASSWORD must be set, e.g. in .env')
 
         S = make_session()
         api = self.base_url

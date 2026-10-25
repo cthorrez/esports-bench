@@ -9,9 +9,35 @@ This *code* is licensed under a
 
 
 ### Setup
-To collect the data yourself, you will need to obtain Aliculac and Liquipedia LPDB API key. Aligulac keys can be generated at [http://aligulac.com/about/api/](http://aligulac.com/about/api/) and Liquipedia LPDB keys can be requested in the Liquipedia [discord server](https://discord.gg/hW3T8BQr).
+Install the locked environment with [uv](https://docs.astral.sh/uv/):
+```bash
+uv sync
+```
 
-Add your key(s) to `.dotenv-template` and rename it to `.env` so that the data pipelines can access them.
+To collect the data yourself, you will need an Aligulac API key, a Liquipedia LPDB API key and a Fandom account for Leaguepedia. Aligulac keys can be generated at [http://aligulac.com/about/api/](http://aligulac.com/about/api/) and Liquipedia LPDB keys can be requested in the Liquipedia [discord server](https://discord.gg/hW3T8BQr).
+
+Copy `.env-template` to `.env` and fill in your keys so that the data pipelines can access them. Data is stored in `data/`, set `ESPORTSBENCH_DATA_DIR` to use another location.
+
+### Updating the data and making a release
+One command refreshes every game, builds the next `data/final_data_v{N}` (test set = the year ending at `--as-of`, train set = everything before), sanity checks it against the previous release and optionally pushes it to Hugging Face:
+```bash
+uv run python -m esportsbench.release --as-of 2026-12-31               # build and validate only
+uv run python -m esportsbench.release --as-of 2026-12-31 --push test   # also push to the test repo and verify the upload
+uv run python -m esportsbench.release --as-of 2026-12-31 --push prod   # test repo first, then prod
+```
+Refreshing only re-fetches matches from the last 90 days before the newest stored match, so it takes minutes. Edits to older matches are only picked up by a full refresh, which is limited by the 60 requests/hour/wiki LPDB rate limit so takes hours. Run one occasionally, for all games or just some:
+```bash
+uv run python -m esportsbench.data_pipeline.get_data_from_source --full -g wc3,sc1
+```
+
+### Benchmarks and sweeps on the latest release
+`bench.py` and the sweeps default to the newest release and its train/test dates:
+```bash
+uv run python -m esportsbench.eval.bench -c esportsbench/experiments/conf/sweep_results/fine_sweep_7D_1000
+uv run python esportsbench/experiments/broad_sweep.py num_samples=1000
+uv run python esportsbench/experiments/fine_sweep.py sweep_results_path=broad_sweep_7D_1000 num_samples=1000
+```
+Sweep options are `key=value` overrides of `esportsbench/experiments/conf/config.yaml`, e.g. `games=[lol,cs] rating_systems=[elo,glicko]`.
 
 
 ### Reproduce Experiments
