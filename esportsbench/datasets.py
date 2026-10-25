@@ -1,11 +1,50 @@
 """module for managing esports datasets for rating system experiments"""
-import pathlib
+import re
+import json
 import numpy as np
 import polars as pl
 from riix.utils.data_utils import TimedPairDataset
 from esportsbench.constants import GAME_NAME_MAP
+from esportsbench.paths import DATA_DIR
 
-BASE_DATA_DIR = pathlib.Path(__file__).resolve().parents[1] / 'data' 
+BASE_DATA_DIR = DATA_DIR
+RELEASE_INFO_FILE = 'release.json'
+
+
+def release_versions():
+    """versions with a final_data_v{version} directory, ascending"""
+    versions = [int(match.group(1)) for path in DATA_DIR.glob('final_data_v*') if (match := re.fullmatch(r'final_data_v(\d+)', path.name))]
+    return sorted(versions)
+
+
+def read_release_info(version):
+    """the release.json written for final_data_v{version}, None if there isn't one"""
+    path = DATA_DIR / f'final_data_v{version}' / RELEASE_INFO_FILE
+    return json.load(open(path)) if path.exists() else None
+
+
+def latest_release_info():
+    """release.json of the newest release which has one"""
+    for version in reversed(release_versions()):
+        info = read_release_info(version)
+        if info is not None:
+            return info
+    raise FileNotFoundError(
+        f'no {DATA_DIR}/final_data_v*/{RELEASE_INFO_FILE} found, make a release with '
+        'python -m esportsbench.release or pass data_dir and the train/test end dates explicitly'
+    )
+
+
+def resolve_data_args(data_dir=None, train_end_date=None, test_end_date=None):
+    """fill in data_dir and the train/test end dates from the latest release where not given"""
+    if data_dir in (None, 'latest') or train_end_date is None or test_end_date is None:
+        info = latest_release_info() if data_dir in (None, 'latest') else read_release_info(data_dir.removeprefix('final_data_v'))
+        if info is None:
+            raise FileNotFoundError(f'{data_dir} has no {RELEASE_INFO_FILE}, pass train_end_date and test_end_date')
+        data_dir = info['data_dir']
+        train_end_date = train_end_date or info['train_end_date']
+        test_end_date = test_end_date or info['test_end_date']
+    return data_dir, train_end_date, test_end_date
 
 
 def load_dataset(

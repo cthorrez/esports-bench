@@ -1,9 +1,8 @@
 import os
 import argparse
-import pathlib
 from datasets import load_dataset
+from esportsbench.paths import DATA_DIR
 
-DATA_DIR = pathlib.Path(__file__).parents[2] / 'data'
 
 def main(destination, file_format, revision):
     os.makedirs(DATA_DIR / destination / file_format, exist_ok=True)
