@@ -13,7 +13,7 @@ import polars as pl
 from requests import Request, Response
 from requests_cache import CachedSession
 from dotenv import load_dotenv
-from esportsbench.utils import is_null_or_empty, outcome_from_scores
+from esportsbench.utils import is_null_or_empty, outcome_from_scores, invalid_date_expr
 
 
 def print_request(request):
@@ -372,3 +372,168 @@ class LPDBDataPipeline(DataPipeline):
                     if 'extradata' in player:
                         del player['extradata']
         return opps
+
+
+def score_outcome_expr():
+    """1.0 / 0.0 / 0.5 from comparing team_1_score and team_2_score, null if either is missing"""
+    return (
+        pl.when(pl.col('team_1_score') > pl.col('team_2_score'))
+        .then(1.0)
+        .when(pl.col('team_1_score') < pl.col('team_2_score'))
+        .then(0.0)
+        .when(
+            ~is_null_or_empty('team_1_score')
+            & ~is_null_or_empty('team_2_score')
+            & (pl.col('team_1_score') == pl.col('team_2_score'))
+        )
+        .then(0.5)
+        .otherwise(None)
+    )
+
+
+class LPDBTeamDataPipeline(LPDBDataPipeline):
+    """shared processing for LPDB team games, where each match2 row has exactly 2 opponents
+
+    subclasses set request_params_groups plus the class attributes below,
+    and can override the hooks (filter_raw, missing_results_expr, filter_teams, filter_outcomes)
+    """
+
+    version = 'v3'
+    schema_overrides = {'match2opponents': LPDBDataPipeline.drop_opponent_extradata}
+    # kwargs for pl.scan_ndjson on the raw data
+    read_kwargs = {'infer_schema_length': 100_000}
+    # 'template': prefer the team template name, 'name': prefer the name entered on the match
+    name_priority = 'template'
+    lowercase_names = False
+    placeholder_names = LPDBDataPipeline.invalid_competitor_names
+    require_two_teams = True
+    filter_missing_teams = True
+    filter_dq = False
+    # if False, winner == '0' is always a draw, otherwise only when resulttype == 'draw'
+    draw_requires_resulttype = True
+    # when the winner field doesn't decide the match, fall back to comparing scores
+    score_outcome_fallback = False
+    # scores of best of 1 matches are rounds, if True replace them with the outcome
+    bo1_scores_from_outcome = False
+
+    def __init__(self, rows_per_request=1000, timeout=60.0, **kwargs):
+        super().__init__(rows_per_request=rows_per_request, timeout=timeout, **kwargs)
+
+    def filter_raw(self, df):
+        """hook for game specific filters on the raw columns"""
+        return df
+
+    def missing_results_expr(self):
+        """hook for an expression marking matches without results, None for no filter"""
+        return None
+
+    def filter_teams(self, df):
+        """hook for game specific filters/transforms once team_1, team_2 and their scores exist"""
+        return df
+
+    def filter_outcomes(self, df):
+        """hook for game specific filters once outcome exists"""
+        return df
+
+    def team_name_expr(self, team):
+        name, template, template_name = (pl.col(f'team_{team}_{field}') for field in ('name', 'template', 'template_name'))
+        if self.name_priority == 'template':
+            expr = (
+                pl.when(~is_null_or_empty(template_name))
+                .then(template_name)
+                .when(is_null_or_empty(name) & ~is_null_or_empty(template))
+                .then(template)
+                .otherwise(name)
+            )
+        else:
+            expr = (
+                pl.when(~is_null_or_empty(name))
+                .then(name)
+                .when(~is_null_or_empty(template_name))
+                .then(template_name)
+                .when(~is_null_or_empty(template))
+                .then(template)
+                .otherwise(None)
+            )
+        if self.lowercase_names:
+            expr = expr.str.to_lowercase()
+        return expr.alias(f'team_{team}')
+
+    def outcome_expr(self):
+        is_draw = pl.col('winner') == '0'
+        if self.draw_requires_resulttype:
+            is_draw = is_draw & (pl.col('resulttype') == 'draw')
+        expr = pl.when(pl.col('winner') == '1').then(1.0).when(pl.col('winner') == '2').then(0.0).when(is_draw).then(0.5)
+        if self.score_outcome_fallback:
+            expr = expr.when(~is_null_or_empty('score_outcome')).then(pl.col('score_outcome'))
+        return expr.otherwise(None).alias('outcome')
+
+    def score_exprs(self):
+        if self.bo1_scores_from_outcome:
+            # score is in rounds for best of 1, use the game score instead
+            is_bo1 = pl.col('bestof') == 1
+            return (
+                pl.when(is_bo1).then(pl.col('outcome')).otherwise(pl.col('team_1_score')).alias('competitor_1_score'),
+                pl.when(is_bo1).then(1.0 - pl.col('outcome')).otherwise(pl.col('team_2_score')).alias('competitor_2_score'),
+            )
+        return pl.col('team_1_score').alias('competitor_1_score'), pl.col('team_2_score').alias('competitor_2_score')
+
+    def process_data(self):
+        df = pl.scan_ndjson(self.raw_data_dir / f'{self.game}.jsonl', **self.read_kwargs).collect()
+        print(f'initial row count: {df.shape[0]}')
+
+        df = self.filter_invalid(df, invalid_date_expr, 'invalid_date')
+        if self.require_two_teams:
+            df = self.filter_invalid(df, pl.col('match2opponents').list.len() != 2, 'not_two_teams')
+        df = self.filter_raw(df)
+
+        # extract team names, scores and statuses
+        df = df.with_columns(
+            pl.col('match2opponents').list.get(0).alias('team_1_struct'),
+            pl.col('match2opponents').list.get(1).alias('team_2_struct'),
+        ).drop('match2opponents')
+        df = df.with_columns(
+            expr
+            for team in (1, 2)
+            for expr in (
+                pl.col(f'team_{team}_struct').struct.field('name').alias(f'team_{team}_name'),
+                pl.col(f'team_{team}_struct').struct.field('template').alias(f'team_{team}_template'),
+                pl.col(f'team_{team}_struct').struct.field('teamtemplate').struct.field('name').alias(f'team_{team}_template_name'),
+                pl.col(f'team_{team}_struct').struct.field('score').cast(pl.Float64).alias(f'team_{team}_score'),
+                pl.col(f'team_{team}_struct').struct.field('status').alias(f'team_{team}_status'),
+            )
+        ).drop('team_1_struct', 'team_2_struct')
+        df = df.with_columns(self.team_name_expr(1), self.team_name_expr(2))
+
+        placeholder_expr = (
+            pl.col('team_1').str.to_lowercase().is_in(self.placeholder_names)
+            | pl.col('team_2').str.to_lowercase().is_in(self.placeholder_names)
+        )
+        df = self.filter_invalid(df, placeholder_expr, 'invalid_competitor')
+        if self.filter_missing_teams:
+            df = self.filter_invalid(df, is_null_or_empty('team_1') | is_null_or_empty('team_2'), 'missing_team')
+        if self.filter_dq:
+            dq_expr = (pl.col('team_1_status').str.to_lowercase() == 'dq') | (pl.col('team_2_status').str.to_lowercase() == 'dq')
+            df = self.filter_invalid(df, dq_expr, 'dq')
+        missing_results_expr = self.missing_results_expr()
+        if missing_results_expr is not None:
+            df = self.filter_invalid(df, missing_results_expr, 'missing_results')
+        df = self.filter_teams(df)
+
+        df = df.with_columns(score_outcome_expr().alias('score_outcome'))
+        df = df.with_columns(self.outcome_expr())
+        df = self.filter_invalid(df, pl.col('outcome').is_null(), 'null_outcome')
+        df = self.filter_outcomes(df)
+        df = self.filter_invalid(df, pl.col('team_1') == pl.col('team_2'), 'played_self')
+
+        df = df.select(
+            'date',
+            pl.col('team_1').alias('competitor_1'),
+            pl.col('team_2').alias('competitor_2'),
+            *self.score_exprs(),
+            'outcome',
+            pl.col('match2id').alias('match_id'),
+            (pl.lit(self.page_prefix) + pl.col('pagename')).alias('page'),
+        ).unique()
+        # sort on every column so rows sharing a (date, match_id) come out in the same order every run
+        return df.sort('date', 'match_id', *[col for col in df.columns if col not in ('date', 'match_id')], nulls_last=True)
