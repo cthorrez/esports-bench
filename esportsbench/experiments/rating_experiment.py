@@ -62,28 +62,25 @@ def main(config: DictConfig):
     }
 
 
-    best_params = {}
-    for game in games:
-        broad_sweep_results = sweep(
-            games=[game],
-            granularity='broad',
-            sweep_config=config.broad_sweep_config,
-            **common_sweep_args
-        )
+    broad_sweep_results = sweep(
+        games=games,
+        granularity='broad',
+        sweep_config=config.broad_sweep_config,
+        **common_sweep_args
+    )
 
-        fine_sweep_config = construct_fine_sweep_config(broad_sweep_results, param_bounds)
-        # only rating systems the broad sweep actually ran are present (unknown models are skipped)
-        for rating_key, rating_config in fine_sweep_config[game].items():
+    fine_sweep_config = construct_fine_sweep_config(broad_sweep_results, param_bounds)
+    # only rating systems the broad sweep actually ran are present (unknown models are skipped)
+    for game_config in fine_sweep_config.values():
+        for rating_key, rating_config in game_config.items():
             rating_config['model'] = config.broad_sweep_config[rating_key]['model']
 
-        fine_sweep_results = sweep(
-            games=[game],
-            granularity='fine',
-            sweep_config=fine_sweep_config,
-            **common_sweep_args,
-        )
-        best_params[game] = fine_sweep_results[game]
-
+    best_params = sweep(
+        games=games,
+        granularity='fine',
+        sweep_config=fine_sweep_config,
+        **common_sweep_args,
+    )
 
     for game_params in best_params.values():
         for rating_key, params in game_params.items():
