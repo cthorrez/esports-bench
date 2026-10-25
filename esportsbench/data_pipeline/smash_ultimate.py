@@ -13,9 +13,11 @@ class SmashUltimateDataPipeline(LPDBDataPipeline):
             'wiki': 'smash',
             'query': 'date, opponent1, opponent2, opponent1score, opponent2score, winner, matchid, pagename',
             'conditions': '[[walkover::!1]] AND [[walkover::!2]] AND [[mode::singles]] AND [[game::ultimate]] AND [[opponent1::!Bye]] AND [[opponent2::!Bye]]',
-            'order': 'date ASC, matchid ASC',
+            'order': 'date ASC, pagename ASC, matchid ASC',
         }
     }
+
+    key_fields = ('pagename', 'matchid')
 
     def __init__(self, rows_per_request=1000, timeout=60.0, **kwargs):
         super().__init__(rows_per_request=rows_per_request, timeout=timeout, **kwargs)

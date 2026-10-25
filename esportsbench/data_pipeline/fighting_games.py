@@ -76,9 +76,11 @@ class FightingGamesDataPipeline(LPDBDataPipeline):
             'wiki': 'fighters',
             'query': 'date, opponent1, opponent2, opponent1score, opponent2score, winner, game, matchid, pagename, objectname, extradata',
             'conditions': '[[walkover::!1]] AND [[walkover::!2]] AND [[mode::singles]] AND [[opponent1::!Bye]] AND [[opponent2::!Bye]]',
-            'order': 'date ASC, objectname ASC',
+            'order': 'date ASC, pagename ASC, objectname ASC',
         }
     }
+
+    key_fields = ('pagename', 'objectname')
 
     def __init__(self, rows_per_request=1000, timeout=60.0, game=None, **kwargs):
         super().__init__(rows_per_request=rows_per_request, timeout=timeout, **kwargs)

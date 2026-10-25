@@ -17,10 +17,13 @@ class Starcraft2DataPipeline(DataPipeline):
     request_params_groups = {
         'starcraft2.jsonl': {
             'format': 'json',
-            'order_by': 'date',  # should this be id?
+            # id breaks ties between matches on the same date so pages don't overlap or skip rows
+            'order_by': ['date', 'id'],
             'apikey': aligulac_api_key,
         }
     }
+
+    key_fields = ('id',)
 
     def __init__(self, rows_per_request=500, timeout=10.0, **kwargs):
         super().__init__(rows_per_request=rows_per_request, timeout=timeout, **kwargs)
@@ -42,9 +45,15 @@ class Starcraft2DataPipeline(DataPipeline):
 
         return iter(request_iterator())
 
+    def with_date_filter(self, request_params, start_date):
+        request_params['date__gte'] = start_date
+        return request_params
+
     def process_response(self, response):
-        response_text = response.text
-        response_json = json.loads(response_text)
+        response.raise_for_status()
+        response_json = json.loads(response.text)
+        if 'objects' not in response_json:
+            raise RuntimeError(f'Aligulac request failed: {response.text[:500]}')
         objects = response_json['objects']
         objects = [
             {k: v for k, v in obj.items() if k in {'id' ,'pla', 'plb', 'sca', 'scb', 'eventobj', 'date'}}
