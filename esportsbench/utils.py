@@ -18,10 +18,6 @@ def is_null_or_empty(col):
     return col.is_null() | (col.cast(pl.Utf8) == '') | (col.cast(pl.Utf8) == 'False')
 
 
-def delimited_list(string_list, delimiter=','):
-    return string_list.split(delimiter)
-
-
 # lots of ways a date can be bad lol
 invalid_date_expr = (
     pl.col('date').is_null()
