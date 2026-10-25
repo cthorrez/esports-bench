@@ -1,9 +1,9 @@
 # default hyperparameters
 
-# data_dir: 'hf_data'
-data_dir: 'final_data_v3_1'
-train_end_date: '2023-09-30'
-test_end_date: '2024-09-30'
+# 'latest' uses the newest release in data/, null dates come from its release.json
+data_dir: 'latest'
+train_end_date: null
+test_end_date: null
 rating_period: '7D'
 num_samples: 16
 num_processes: 16

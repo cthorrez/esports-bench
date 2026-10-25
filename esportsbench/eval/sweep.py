@@ -3,6 +3,7 @@ import os
 import pathlib
 import json
 import warnings
+import datetime
 from collections import defaultdict, Counter
 from contextlib import ExitStack
 from functools import lru_cache
@@ -160,7 +161,12 @@ def sweep(
             best_params, best_metrics = best_of_chunks(pair_results[idx] for idx in sorted(pair_results))
             num_done = sum(len(r) == num_chunks[pair] for pair, r in chunk_results.items())
             print(f'[{num_done}/{len(num_chunks)}] {game} {rating_system_key}: {round_dict(best_metrics)} {round_dict(best_params)}')
-            out_dict = {'best_params': best_params.copy(), 'best_metrics': best_metrics.copy()}
+            out_dict = {
+                'best_params': best_params.copy(),
+                'best_metrics': best_metrics.copy(),
+                # what the params were tuned on, so it's clear when they are out of date
+                'meta': {'num_samples': num_samples, 'swept_on': datetime.date.today().isoformat(), **dataset_kwargs},
+            }
             out_dir = results_dir / game
             os.makedirs(out_dir, exist_ok=True)
             json.dump(out_dict, open(out_dir / f'{rating_system_key}.json', 'w'), indent=2)

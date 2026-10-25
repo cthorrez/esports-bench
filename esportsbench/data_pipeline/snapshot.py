@@ -1,11 +1,10 @@
 import os
 import glob
-import pathlib
 from datetime import datetime
 from argparse import ArgumentParser
 import polars as pl
+from esportsbench.paths import DATA_DIR
 
-DATA_DIR = pathlib.Path(__file__).parents[2] / 'data'
 SNAPSHOT_DIR = DATA_DIR / 'snapshots'
 
 def make_snapshot_for_file(file_path):

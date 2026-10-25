@@ -2,6 +2,7 @@ import pathlib
 from dataclasses import dataclass
 from typing import Literal, List, Optional, Union
 from omegaconf import OmegaConf, DictConfig
+from esportsbench.datasets import resolve_data_args
 
 CONF_DIR = pathlib.Path(__file__).resolve().parents[1] / 'experiments' / 'conf'
 
@@ -25,7 +26,12 @@ def load_config(args: list[str] | None = None) -> DictConfig:
         for group, name in default.items():
             name = overrides.pop(group, name)
             config[group] = OmegaConf.load(CONF_DIR / group / f'{name}.yaml')
-    return OmegaConf.merge(config, overrides)
+    config = OmegaConf.merge(config, overrides)
+    if 'data_dir' in config:
+        config.data_dir, config.train_end_date, config.test_end_date = resolve_data_args(
+            config.data_dir, config.get('train_end_date'), config.get('test_end_date')
+        )
+    return config
 
 @dataclass
 class HyperparameterConfig:

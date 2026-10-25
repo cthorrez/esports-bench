@@ -5,7 +5,7 @@ import multiprocessing
 from collections import defaultdict
 from riix.eval import evaluate
 from esportsbench.arg_parsers import get_games_argparser, comma_separated
-from esportsbench.datasets import load_dataset
+from esportsbench.datasets import load_dataset, resolve_data_args
 from esportsbench.constants import GAME_NAME_MAP, ALL_RATING_SYSTEM_NAMES, RATING_SYSTEM_NAME_CLASS_MAP
 
 
@@ -151,20 +151,23 @@ if __name__ == '__main__':
     )
     parser.add_argument('-dd', '--drop_draws', action='store_true')
     parser.add_argument('-rp', '--rating_period', type=str, required=False, default='7D')
-    parser.add_argument('--train_end_date', type=str, default='2025-09-30', help='inclusive end date for test set')
-    parser.add_argument('--test_end_date', type=str, default='2026-09-30', help='inclusive end date for test set')
-    parser.add_argument('-d', '--data_dir', type=str, default='final_data_v11')
+    parser.add_argument('--train_end_date', type=str, help='inclusive end date for train set, default: latest release')
+    parser.add_argument('--test_end_date', type=str, help='inclusive end date for test set, default: latest release')
+    parser.add_argument('-d', '--data_dir', type=str, help='default: latest release')
     parser.add_argument('-c', '--hyperparameter_config', type=str, required=False, default='default')
     parser.add_argument('-np', '--num_processes', type=int, default=8)
     args = parser.parse_args()
+    data_dir, train_end_date, test_end_date = resolve_data_args(args.data_dir, args.train_end_date, args.test_end_date)
+    print(f'benchmarking on {data_dir}: train <= {train_end_date} < test <= {test_end_date}')
 
     results = run_benchmark(
         args.games,
         args.rating_period,
-        train_end_date=args.train_end_date,
-        test_end_date=args.test_end_date,
-        data_dir=args.data_dir,
+        train_end_date=train_end_date,
+        test_end_date=test_end_date,
+        data_dir=data_dir,
         drop_draws=args.drop_draws,
+        rating_systems=args.rating_systems,
         hyperparameter_config=args.hyperparameter_config,
         num_processes=args.num_processes,
     )
