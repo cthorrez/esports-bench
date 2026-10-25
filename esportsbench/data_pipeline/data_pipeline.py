@@ -4,26 +4,28 @@ Each data pipeline must implement ingest_data and process_data methods
 """
 
 from abc import ABC
-from typing import List, Dict
+from typing import List, Dict, Tuple
 import time
 import json
+import datetime
 from pathlib import Path
 import os
 import polars as pl
+import requests
 from requests import Request, Response
-from requests_cache import CachedSession
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 from dotenv import load_dotenv
 from esportsbench.utils import is_null_or_empty, outcome_from_scores, invalid_date_expr
 
 
-def print_request(request):
-    method = request.method
-    url = request.url
-    if method == 'GET':
-        print(f'GET: {url}')
-    elif method == 'POST':
-        print(f'POST: {url}')
-        print(f'body: {request.body}')
+def make_session():
+    """requests session which retries transient failures (dropped connections, rate limiting, server errors)"""
+    session = requests.Session()
+    retry = Retry(total=5, backoff_factor=10, status_forcelist=[429, 500, 502, 503, 504], allowed_methods=None)
+    session.mount('https://', HTTPAdapter(max_retries=retry))
+    session.mount('http://', HTTPAdapter(max_retries=retry))
+    return session
 
 
 class Waiter:
@@ -41,32 +43,41 @@ class Waiter:
             time_since_prev = time.time() - self.prev_time
             wait_time = max(0, self.timeout - time_since_prev)
             if wait_time > 0:
-                print(f'waiting {wait_time} seconds before issuing the request')
                 time.sleep(wait_time)
-            self.prev_time = time.time()
+        self.prev_time = time.time()
 
 
 class DataPipeline(ABC):
-    """base class for ingesting and processing data from various APIs"""
+    """base class for ingesting and processing data from various APIs
+
+    raw data is stored as one jsonl file per request group, with one row per match keyed by key_fields.
+    ingest_data refreshes it incrementally: it re-fetches only matches dated within overlap_days of the
+    newest stored match and upserts them by key, so it costs a few requests per source and picks up
+    late result corrections. ingest_data(full=True) rebuilds the file from scratch.
+    """
 
     game: str = None
     schema_overrides: Dict = None
     request_params_groups: Dict = None
+    # raw fields which together uniquely identify a match
+    key_fields = ('match2id',)
+    # raw field holding the match date
+    date_field = 'date'
+    # a refresh which returns fewer rows than this fraction of the stored matches in its window is treated as
+    # a broken response (e.g. an expired api key returning an empty result) and nothing is written
+    min_fetched_fraction = 0.5
 
     def __init__(
         self,
         rows_per_request,
         timeout,
-        keys_to_refresh=None,
         max_rows=float('inf'),
         **kwargs,
     ):
         self.rows_per_request = rows_per_request
         self.waiter = Waiter(timeout=timeout)
-        self.keys_to_refresh = []
-        if keys_to_refresh is not None:
-            self.keys_to_refresh = keys_to_refresh
         self.max_rows = max_rows
+        self.session = make_session()
 
         data_dir = Path(__file__).resolve().parents[2] / 'data'
         self.raw_data_dir = data_dir / 'raw_data'
@@ -76,91 +87,112 @@ class DataPipeline(ABC):
         os.makedirs(self.raw_data_dir, exist_ok=True)
         os.makedirs(self.invalid_data_dir, exist_ok=True)
         os.makedirs(self.full_data_dir / 'csv', exist_ok=True)
-        os.makedirs(self.full_data_dir / 'parquet', exist_ok=True) 
+        os.makedirs(self.full_data_dir / 'parquet', exist_ok=True)
 
-        cache_dir = data_dir / 'requests_cache'
-        os.makedirs(cache_dir, exist_ok=True)
-        self.cache_path = cache_dir / self.game
+    @property
+    def rate_limit_group(self):
+        """pipelines in the same group share a rate limit so must not fetch at the same time"""
+        return type(self).__name__
 
-
-    def process_response(self, response: Response) -> List[dict]:
+    def get_request_iterator(self, request_params):
         raise NotImplementedError
 
-    def ingest_data(self):
+    def process_response(self, response: Response) -> Tuple[List[dict], bool]:
+        """returns the rows from a response and whether it was the last page"""
+        raise NotImplementedError
+
+    def with_date_filter(self, request_params: dict, start_date: str) -> dict:
+        """returns request_params restricted to matches after start_date (YYYY-MM-DD)"""
+        raise NotImplementedError
+
+    def row_key(self, row: dict) -> str:
+        return json.dumps([row.get(field) for field in self.key_fields])
+
+    def row_date(self, row: dict) -> str:
+        return str(row.get(self.date_field) or '')
+
+    def clean_row(self, row: dict) -> dict:
+        if self.schema_overrides is not None:
+            for key, value in self.schema_overrides.items():
+                if key in row:
+                    row[key] = value(row[key])
+        # HACKY HACKY HACK
+        if 'match2opponents' in row:
+            for opp in row['match2opponents']:
+                if ('extradata' in opp) and (opp['extradata'] == []):
+                    opp['extradata'] = None
+        return row
+
+    def fetch_rows(self, request_params: dict, label: str) -> List[dict]:
+        """fetch every page for request_params, waiting between requests to respect the rate limit"""
+        rows = []
+        for request in self.get_request_iterator(dict(request_params)):
+            self.waiter.wait()
+            response = self.session.send(request, timeout=300)
+            page_rows, is_done = self.process_response(response)
+            rows.extend(self.clean_row(row) for row in page_rows)
+            print(f'{label}: fetched {len(rows)} rows', flush=True)
+            if is_done or len(rows) >= self.max_rows:
+                return rows
+        return rows
+
+    def read_raw_rows(self, path: Path) -> Dict[str, Tuple[str, str]]:
+        """map of key -> (date, raw json line) for a stored raw file, the last copy of a key wins"""
+        rows = {}
+        with open(path, encoding='utf8') as in_file:
+            for line in in_file:
+                row = json.loads(line)
+                if 'request_key' in row:  # left over from the old requests_cache ingestion
+                    del row['request_key']
+                    line = json.dumps(row) + '\n'
+                if not line.endswith('\n'):
+                    line += '\n'
+                rows[self.row_key(row)] = (self.row_date(row), line)
+        return rows
+
+    def ingest_data(self, full=False, overlap_days=90):
         for filename, request_params in self.request_params_groups.items():
-            request_iterator = self.get_request_iterator(request_params)
-            self.ingest_data_for_group(filename, request_iterator)
+            self.ingest_data_for_group(filename, request_params, full=full, overlap_days=overlap_days)
 
-    def ingest_data_for_group(self, filename, request_iterator):
-        """main ingestion method. Makes requests from the iterate_requests methods, processes the
-        results and writes the raw data to disk.
-        """
-        sess = CachedSession(
-            self.cache_path,
-            backend='sqlite',
-            allowable_methods=('GET', 'POST'),
-            ignored_parameters=['Authorization', 'X-API-KEY', 'access_token', 'api_key', 'apikey'],
+    def ingest_data_for_group(self, filename, request_params, full=False, overlap_days=90):
+        """refresh one raw data file, see the class docstring"""
+        path = self.raw_data_dir / filename
+        rows = {} if (full or not path.exists()) else self.read_raw_rows(path)
+        start_date = None
+        if rows:
+            newest = min(max(date for date, _ in rows.values())[:10], datetime.date.today().isoformat())
+            start_date = (datetime.date.fromisoformat(newest) - datetime.timedelta(days=overlap_days)).isoformat()
+            request_params = self.with_date_filter(dict(request_params), start_date)
+        label = f'{self.game} {filename} ' + (f'since {start_date}' if start_date else '(full)')
+
+        fetched = {self.row_key(row): (self.row_date(row), json.dumps(row) + '\n') for row in self.fetch_rows(request_params, label)}
+
+        removed = []
+        if start_date is not None:
+            # stored matches inside the window which the source no longer returns were deleted, moved
+            # or stopped matching the conditions. Skip the boundary day since APIs differ on > vs >=
+            cutoff = (datetime.date.fromisoformat(start_date) + datetime.timedelta(days=1)).isoformat()
+            in_window = [key for key, (date, _) in rows.items() if date[:10] >= cutoff]
+            if len(fetched) < self.min_fetched_fraction * len(in_window):
+                raise RuntimeError(
+                    f'{label}: only {len(fetched)} matches returned but {len(in_window)} are stored for the window, '
+                    'not writing, check the API response'
+                )
+            removed = [key for key in in_window if key not in fetched]
+            for key in removed:
+                del rows[key]
+        num_updated = sum(key in rows for key in fetched)
+        rows.update(fetched)
+
+        tmp_path = path.with_suffix('.jsonl.tmp')
+        with open(tmp_path, 'w', encoding='utf8') as out_file:
+            for key in sorted(rows, key=lambda key: (rows[key][0], key)):
+                out_file.write(rows[key][1])
+        os.replace(tmp_path, path)
+        print(
+            f'{label}: {len(fetched)} fetched, {len(fetched) - num_updated} new, {num_updated} updated, '
+            f'{len(removed)} removed, {len(rows)} total in {path}', flush=True
         )
-        output_path = self.raw_data_dir / filename
-        with open(output_path, 'w', encoding='utf8') as out_file:
-            num_rows = 0
-            is_done = False
-            req_idx = 0
-            while not is_done:
-                request = next(request_iterator)
-                print('current request:')
-                print_request(request)
-                request_key = sess.cache.create_key(request)
-                cache_has_key = sess.cache.contains(request_key)
-                force_refresh = (not cache_has_key) or (request_key in self.keys_to_refresh)
-                if force_refresh:
-                    self.waiter.wait()
-                response = sess.send(request, force_refresh=force_refresh)
-                processed_rows, is_done = self.process_response(response)
-
-                if (cache_has_key and is_done):
-                    print(f'response had less than {self.rows_per_request} rows, retrying with force_refresh=True')
-                    self.waiter.wait()
-                    response = sess.send(request, force_refresh=True)
-                    processed_rows, is_done = self.process_response(response)
-
-                num_rows += len(processed_rows)
-                req_idx += 1
-
-                for row in processed_rows:
-                    row['request_key'] = request_key
-                    if self.schema_overrides is not None:
-                        for key, value in self.schema_overrides.items():
-                            if key in row:
-                                row[key] = value(row[key])
-                    # HACKY HACKY HACK
-                    if ('match2opponents' in row):
-                        for opp in row['match2opponents']:
-                            if ('extradata' in opp) and (opp['extradata'] == []):
-                                opp['extradata'] = None
-                    out_file.write(json.dumps(row) + '\n')
-                out_file.flush()
-                if num_rows >= self.max_rows:
-                    is_done = True
-                if num_rows == 0:
-                    is_done = True
-                    sess.cache.delete(request_key)
-        sess.close()
-        print(f'wrote {num_rows} to {output_path}')
-
-    def migrate_cache(self):
-        """Re-key all existing cache entries to exclude API key params from the cache key.
-        Call this once after switching to a new API key.
-        """
-        sess = CachedSession(
-            self.cache_path,
-            backend='sqlite',
-            allowable_methods=('GET', 'POST'),
-            ignored_parameters=['Authorization', 'X-API-KEY', 'access_token', 'api_key', 'apikey'],
-        )
-        sess.cache.recreate_keys()
-        sess.close()
-        print(f'Cache migration complete for {self.cache_path}')
 
     def process_and_write(self):
         df = self.process_data()
@@ -231,8 +263,17 @@ class LPDBDataPipeline(DataPipeline):
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'accept-encoding': 'gzip',
             }
-        wiki = next(iter(self.request_params_groups.values()))['wiki']
-        self.page_prefix = f'https://liquipedia.net/{wiki}/'
+        self.wiki = next(iter(self.request_params_groups.values()))['wiki']
+        self.page_prefix = f'https://liquipedia.net/{self.wiki}/'
+
+    @property
+    def rate_limit_group(self):
+        # the LPDB rate limit is per wiki
+        return f'liquipedia/{self.wiki}'
+
+    def with_date_filter(self, request_params, start_date):
+        request_params['conditions'] = f"({request_params['conditions']}) AND [[date::>{start_date}]]"
+        return request_params
 
     def get_request_iterator(self, request_params):
         def request_iterator():

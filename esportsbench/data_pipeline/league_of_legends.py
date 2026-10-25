@@ -3,7 +3,7 @@ import json
 import polars as pl
 import requests
 from esportsbench.utils import is_null_or_empty
-from esportsbench.data_pipeline.data_pipeline import DataPipeline
+from esportsbench.data_pipeline.data_pipeline import DataPipeline, make_session
 
 
 class LeaugeOfLegendsDataPipeline(DataPipeline):
@@ -23,12 +23,16 @@ class LeaugeOfLegendsDataPipeline(DataPipeline):
         }
     }
 
+    # MatchId alone is not unique, e.g. Uniliga 2024 reuses ids across groups
+    key_fields = ('MatchId', 'Team1', 'Team2')
+    date_field = 'DateTime UTC'
+
     def __init__(self, rows_per_request=500, timeout=2.0, **kwargs):
         super().__init__(rows_per_request=rows_per_request, timeout=timeout, **kwargs)
         username = os.getenv("LEAGUEPEDIA_USERNAME")
         password = os.getenv("LEAGUEPEDIA_PASSWORD")
 
-        S = requests.Session()
+        S = make_session()
         api = self.base_url
         r1 = S.get(api, params={"action": "query", "meta": "tokens", "type": "login", "format": "json"})
         token = r1.json()["query"]["tokens"]["logintoken"]
@@ -60,12 +64,16 @@ class LeaugeOfLegendsDataPipeline(DataPipeline):
 
         return iter(request_iterator())
 
+    def with_date_filter(self, request_params, start_date):
+        request_params['where'] = f'({request_params["where"]}) AND (DateTime_UTC > "{start_date}")'
+        return request_params
+
     def process_response(self, response):
-        response_text = response.text
-        response_json = json.loads(response_text)
-        results = []
+        response.raise_for_status()
+        response_json = json.loads(response.text)
         if 'cargoquery' not in response_json:
-            print(response_json)
+            raise RuntimeError(f'Leaguepedia request failed: {response.text[:500]}')
+        results = []
         for result in response_json['cargoquery']:
             results.append(result['title'])
         is_done = len(results) < self.rows_per_request
