@@ -265,6 +265,9 @@ class LPDBDataPipeline(DataPipeline):
 
     def process_response(self, response):
         response_text = response.text
+        if response.status_code != 200:
+            # error responses still contain 'result': [] which would otherwise look like the last page
+            raise RuntimeError(f'LPDB request failed with status {response.status_code}: {response_text[:500]}')
         if (response.status_code == 200) and (response_text == ''):
             print('🤔Something is REAL 🐠 🐟 🎣 🐟🐠 going on')
             print(response.headers)
