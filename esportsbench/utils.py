@@ -10,20 +10,6 @@ def outcome_from_scores(score_1, score_2):
         return 0.0
     return 0.5
 
-def bestof_from_scores(score_1, score_2):
-    if score_1 != score_2:
-        return int((max(score_1, score_2) * 2) - 1)
-    elif (int(score_1) != -1) and (int(score_2) != -1):
-        return int(max(score_1, score_2) * 2)
-    else:
-        return 1
-
-
-def float_nullable(value):
-    if value is None:
-        return None
-    return value
-
 
 def is_null_or_empty(col):
     """returns a polars expression for is the column is null, empty string(or string False for some reason 😑"""

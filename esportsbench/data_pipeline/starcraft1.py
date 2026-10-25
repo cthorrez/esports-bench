@@ -1,7 +1,7 @@
 import json
 import polars as pl
 from esportsbench.data_pipeline.data_pipeline import LPDBDataPipeline
-from esportsbench.utils import is_null_or_empty, invalid_date_expr, outcome_from_scores
+from esportsbench.utils import is_null_or_empty, invalid_date_expr
 
 
 class Starcraft1DataPipeline(LPDBDataPipeline):

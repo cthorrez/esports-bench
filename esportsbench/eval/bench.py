@@ -1,7 +1,6 @@
 """module for runninng benchmarks"""
 import os
 import json
-from functools import partial
 import multiprocessing
 from collections import defaultdict
 from riix.eval import evaluate
@@ -95,7 +94,8 @@ def run_benchmark(
                         raise FileNotFoundError
                 elif isinstance(hyperparameter_config, dict):
                     print('Using provided hyperparameters:')
-                    params = hyperparameter_config[game_short_name][rating_system_key]
+                    params = dict(hyperparameter_config[game_short_name][rating_system_key])
+                    rating_system_name = params.get('model', rating_system_key)
                     print(params)
                 else:
                     print(hyperparameter_config)
@@ -129,12 +129,10 @@ def print_results(data_dict):
         ll_latex_line =f'{filler} & Log Loss'
         for rating_system_name in rating_systems.keys():
             metrics = rating_systems[rating_system_name]
-            accuracy = f"{metrics.get('accuracy', 'N/A'):.4f}".rjust(10)
             accuracy_without_draws = f"{metrics.get('accuracy_without_draws', 'N/A'):.4f}".rjust(10)
             log_loss = f"{metrics.get('log_loss', 'N/A'):.4f}".rjust(10)
             brier_score = f"{metrics.get('brier_score', 'N/A'):.4f}".rjust(12)
             duration = f"{metrics.get('duration', 'N/A'):.4f}".rjust(10)
-            # print(f'{game:<18}{rating_system_name:<30}{accuracy}{log_loss}{brier_score}{duration}')
             print(f'{game:<18}{rating_system_name:<30}{accuracy_without_draws}{log_loss}{brier_score}{duration}')
 
             acc_latex_line += f' & {accuracy_without_draws}'

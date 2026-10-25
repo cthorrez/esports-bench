@@ -5,14 +5,14 @@ This script will run a full rating system experiment
   3. run the evaluation pipeline with the best hyperparameters identified by the fine sweep on the test set, report train and test numbers
 """
 import warnings
-import hydra
 import pathlib
 import yaml
 from omegaconf import DictConfig
-from esportsbench.eval.bench import run_benchmark, add_mean_metrics, print_results
+from esportsbench.eval.experiment_config import load_config
+from esportsbench.eval.bench import run_benchmark, print_results
 from esportsbench.eval.sweep import sweep
 from esportsbench.eval.experiment_config import HyperparameterConfig
-from esportsbench.constants import GAME_SHORT_NAMES, ALL_RATING_SYSTEM_NAMES
+from esportsbench.constants import GAME_SHORT_NAMES
 
 # Suppress overflow warnings since many of the combinations swept over are expected to be numerically unstable
 warnings.filterwarnings('ignore', category=RuntimeWarning)
@@ -45,7 +45,6 @@ def construct_fine_sweep_config(broad_sweep_config, param_bounds, low_multiplier
     return fine_sweep_config
 
 
-@hydra.main(version_base=None, config_path="conf", config_name="config")
 def main(config: DictConfig):
 
     param_file_path = pathlib.Path(__file__).parent / 'conf' / 'param_bounds.yaml'
@@ -73,9 +72,9 @@ def main(config: DictConfig):
         )
 
         fine_sweep_config = construct_fine_sweep_config(broad_sweep_results, param_bounds)
-        for rating_key in config.broad_sweep_config:
-            for game in fine_sweep_config:
-                fine_sweep_config[game][rating_key]['model'] = config.broad_sweep_config[rating_key]['model']
+        # only rating systems the broad sweep actually ran are present (unknown models are skipped)
+        for rating_key, rating_config in fine_sweep_config[game].items():
+            rating_config['model'] = config.broad_sweep_config[rating_key]['model']
 
         fine_sweep_results = sweep(
             games=[game],
@@ -86,9 +85,9 @@ def main(config: DictConfig):
         best_params[game] = fine_sweep_results[game]
 
 
-    for rating_key in config.broad_sweep_config:
-        for game in best_params:
-            best_params[game][rating_key]['model'] = config.broad_sweep_config[rating_key]['model']
+    for game_params in best_params.values():
+        for rating_key, params in game_params.items():
+            params['model'] = config.broad_sweep_config[rating_key]['model']
 
     benchark = run_benchmark(
         games=games,
@@ -101,4 +100,4 @@ def main(config: DictConfig):
     print_results(benchark)        
 
 if __name__ == '__main__':
-    main()
+    main(load_config())

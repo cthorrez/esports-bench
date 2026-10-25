@@ -3,8 +3,8 @@ import yaml
 import json
 import pathlib
 import warnings
-import hydra
 from omegaconf import DictConfig
+from esportsbench.eval.experiment_config import load_config
 from esportsbench.eval.sweep import sweep
 from esportsbench.constants import GAME_SHORT_NAMES
 from esportsbench.eval.experiment_config import HyperparameterConfig
@@ -50,21 +50,29 @@ def construct_fine_sweep_config(broad_sweep_config, param_bounds, low_multiplier
         fine_sweep_config[game] = fine_game_config
     return fine_sweep_config
 
-@hydra.main(version_base=None, config_path="conf", config_name="config")
 def main(config: DictConfig):
     if config.games == 'all':
         games = GAME_SHORT_NAMES
     else:
         games = config.games
-    param_file_path = pathlib.Path(__file__).parent / 'conf' / 'param_bounds.yaml'
-    param_bounds = yaml.full_load(open(param_file_path))
-    broad_sweep_results = load_sweep_results(config.sweep_results_path)
+    conf_dir = pathlib.Path(__file__).parent / 'conf'
+    param_bounds = yaml.full_load(open(conf_dir / 'param_bounds.yaml'))
+    # relative paths are resolved against conf/sweep_results, e.g. broad_sweep_7D_1000
+    sweep_results_path = conf_dir / 'sweep_results' / config.sweep_results_path
+    broad_sweep_results = load_sweep_results(sweep_results_path)
     sweep_config = construct_fine_sweep_config(broad_sweep_results, param_bounds)
+    # the broad sweep results only store params, copy over which model each rating system key uses
+    for game_config in sweep_config.values():
+        for rating_system_key, rating_system_config in game_config.items():
+            if rating_system_key in config.broad_sweep_config:
+                rating_system_config['model'] = config.broad_sweep_config[rating_system_key]['model']
+            else:
+                rating_system_config['model'] = rating_system_key
 
     for game in games:
         sweep(
             games=[game],
-            rating_systems=config.rating_systems,
+            rating_systems=config.get('rating_systems', 'all'),
             data_dir=config.data_dir,
             granularity='fine',
             sweep_config=sweep_config,
@@ -77,4 +85,4 @@ def main(config: DictConfig):
 
 
 if __name__ == '__main__':
-    main()
+    main(load_config())

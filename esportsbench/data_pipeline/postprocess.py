@@ -3,7 +3,6 @@ import argparse
 from datetime import datetime
 import polars as pl
 import pathlib
-from esportsbench.constants import GAME_NAME_MAP
 
 pl.Config.set_tbl_rows(100)
 
