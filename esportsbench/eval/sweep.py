@@ -3,11 +3,14 @@ import os
 import pathlib
 import json
 import warnings
-from collections import defaultdict
+from collections import defaultdict, Counter
+from contextlib import ExitStack
+from functools import lru_cache
+from multiprocessing import get_context
 import numpy as np
 from riix.eval import grid_search
-from esportsbench.datasets import load_dataset
-from esportsbench.constants import RATING_SYSTEM_NAME_CLASS_MAP
+from esportsbench.datasets import load_dataset, BASE_DATA_DIR
+from esportsbench.constants import RATING_SYSTEM_NAME_CLASS_MAP, GAME_NAME_MAP
 
 # Suppress overflow warnings since many of the combinations swept over are expected to be numerically unstable
 warnings.filterwarnings('ignore', category=RuntimeWarning)
@@ -51,6 +54,42 @@ def construct_param_configurations(
     return param_samples
 
 
+@lru_cache(maxsize=2)
+def load_train_dataset(game, **dataset_kwargs):
+    """load the train split of a game, during sweeping the train data is the val data
+    cached so a worker process loads each game once rather than once per rating system"""
+    dataset, test_mask = load_dataset(game, **dataset_kwargs)
+    train_rows = int(np.logical_not(test_mask).sum())
+    return dataset[:train_rows]
+
+
+def sweep_one(job):
+    """run a chunk of param configurations for one (game, rating system) and return the best"""
+    game, rating_system_key, rating_system_name, chunk_idx, param_configurations, dataset_kwargs = job
+    dataset = load_train_dataset(game, **dataset_kwargs)
+    best_params, best_metrics = grid_search(
+        rating_system_class=RATING_SYSTEM_NAME_CLASS_MAP[rating_system_name],
+        dataset=dataset,
+        metrics_mask=np.ones(len(dataset), dtype=np.bool_),
+        param_configurations=param_configurations,
+        metric='log_loss',
+        minimize_metric=True,
+        # riix traces hyperparameters so sequential fits share one compiled scan,
+        # this is far faster than a pool per sweep where every worker recompiles
+        num_processes=None,
+    )
+    return game, rating_system_key, chunk_idx, best_params, best_metrics
+
+
+def best_of_chunks(chunk_results, metric='log_loss'):
+    """the best (params, metrics) across chunks, the first minimum wins like grid_search"""
+    best_params, best_metrics = {}, {}
+    for params, metrics in chunk_results:
+        if metrics and (not best_metrics or metrics[metric] < best_metrics[metric]):
+            best_params, best_metrics = params, metrics
+    return best_params, best_metrics
+
+
 def sweep(
     games,
     data_dir,
@@ -63,65 +102,69 @@ def sweep(
     num_samples=100,
     num_processes=8,
     rating_systems='all',
+    configs_per_job=100,
 ):
+    """sweep hyperparameters for each (game, rating system) pair
+
+    each pair's configurations are split into jobs of configs_per_job and num_processes jobs run in parallel,
+    so a rating system which is slow per configuration doesn't leave one process running long after the rest
+    """
     sweep_results = defaultdict(dict)
     results_dir = pathlib.Path(__file__).parents[1] / 'experiments' / 'conf' / 'sweep_results' / f'{granularity}_sweep_{rating_period}_{num_samples}'
-    os.makedirs(results_dir, exist_ok=True)
-    for dataset_name in games:
-        dataset, test_mask = load_dataset(
-            dataset_name,
-            rating_period=rating_period,
-            drop_draws=drop_draws,
-            train_end_date=train_end_date,
-            test_end_date=test_end_date,
-            data_dir=data_dir,
-        )
+    dataset_kwargs = {
+        'rating_period': rating_period,
+        'drop_draws': drop_draws,
+        'train_end_date': train_end_date,
+        'test_end_date': test_end_date,
+        'data_dir': data_dir,
+    }
 
-
-        train_rows = int(np.logical_not(test_mask).sum())
-        dataset = dataset[:train_rows]
-        train_mask = np.ones(len(dataset), dtype=np.bool_)
-        print(f'Sweeping on dataset with {len(dataset)} rows')
-
-        if granularity == 'broad':
-            game_sweep_config = sweep_config
-        elif granularity == 'fine':
-            game_sweep_config = sweep_config[dataset_name]
-
+    jobs = []
+    for game in games:
+        game_sweep_config = sweep_config if granularity == 'broad' else sweep_config[game]
         rating_system_keys = list(game_sweep_config.keys())
         if rating_systems != 'all':
             rating_system_keys = [key for key in rating_system_keys if key in rating_systems]
-
         for rating_system_key in rating_system_keys:
             rating_system_name = game_sweep_config[rating_system_key]['model']
             if rating_system_name not in RATING_SYSTEM_NAME_CLASS_MAP:
                 print(f'Skipping {rating_system_key}: model {rating_system_name} is not in RATING_SYSTEM_NAME_CLASS_MAP')
                 continue
-            print(f'Sweeping {rating_system_key} on {dataset_name} over {num_samples} configurations')
-            rating_system_class = RATING_SYSTEM_NAME_CLASS_MAP[rating_system_name]
             param_configurations = construct_param_configurations(
                 param_configs=game_sweep_config[rating_system_key], num_samples=num_samples
             )
-            best_params, best_metrics = grid_search(
-                rating_system_class=rating_system_class,
-                dataset=dataset,
-                metrics_mask=train_mask, # during sweeping the train data is the val data
-                param_configurations=param_configurations,
-                metric='log_loss',
-                minimize_metric=True,
-                num_processes=num_processes,
-            )
-            print('best hyperparameters:')
-            print(round_dict(best_params))
-            print('best metrics:')
-            print(round_dict(best_metrics))
+            for chunk_idx, start in enumerate(range(0, len(param_configurations), configs_per_job)):
+                chunk = param_configurations[start:start + configs_per_job]
+                jobs.append((game, rating_system_key, rating_system_name, chunk_idx, chunk, dataset_kwargs))
+    num_chunks = Counter((job[0], job[1]) for job in jobs)
+
+    # biggest games first so the long sweeps don't end up running alone at the end
+    data_path = BASE_DATA_DIR / data_dir / 'parquet'
+    jobs.sort(key=lambda job: os.path.getsize(data_path / f'{GAME_NAME_MAP.get(job[0], job[0])}.parquet'), reverse=True)
+    print(f'Sweeping {len(num_chunks)} (game, rating system) pairs over {num_samples} configurations each in {len(jobs)} jobs')
+
+    with ExitStack() as stack:
+        if num_processes > 1:
+            # spawn, not fork: forking after jax has initialized is unsafe
+            pool = stack.enter_context(get_context('spawn').Pool(min(num_processes, len(jobs))))
+            results = pool.imap_unordered(sweep_one, jobs)
+        else:
+            results = map(sweep_one, jobs)
+
+        chunk_results = defaultdict(dict)
+        for game, rating_system_key, chunk_idx, chunk_params, chunk_metrics in results:
+            pair_results = chunk_results[(game, rating_system_key)]
+            pair_results[chunk_idx] = (chunk_params, chunk_metrics)
+            if len(pair_results) < num_chunks[(game, rating_system_key)]:
+                continue
+            best_params, best_metrics = best_of_chunks(pair_results[idx] for idx in sorted(pair_results))
+            num_done = sum(len(r) == num_chunks[pair] for pair, r in chunk_results.items())
+            print(f'[{num_done}/{len(num_chunks)}] {game} {rating_system_key}: {round_dict(best_metrics)} {round_dict(best_params)}')
             out_dict = {'best_params': best_params.copy(), 'best_metrics': best_metrics.copy()}
-            out_dir = f'{results_dir}/{dataset_name}'
+            out_dir = results_dir / game
             os.makedirs(out_dir, exist_ok=True)
-            out_file_path = f'{out_dir}/{rating_system_key}.json'
-            json.dump(out_dict, open(out_file_path, 'w'), indent=2)
-            sweep_results[dataset_name][rating_system_key] = best_params
-            del best_metrics, best_params
+            json.dump(out_dict, open(out_dir / f'{rating_system_key}.json', 'w'), indent=2)
+            sweep_results[game][rating_system_key] = best_params
     return sweep_results
 
 

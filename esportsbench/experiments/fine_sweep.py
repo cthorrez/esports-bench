@@ -69,19 +69,18 @@ def main(config: DictConfig):
             else:
                 rating_system_config['model'] = rating_system_key
 
-    for game in games:
-        sweep(
-            games=[game],
-            rating_systems=config.get('rating_systems', 'all'),
-            data_dir=config.data_dir,
-            granularity='fine',
-            sweep_config=sweep_config,
-            rating_period=config.rating_period,
-            train_end_date=config.train_end_date,
-            test_end_date=config.test_end_date,
-            num_samples=config.num_samples,
-            num_processes=config.num_processes,
-        )
+    sweep(
+        games=games,
+        rating_systems=config.get('rating_systems', 'all'),
+        data_dir=config.data_dir,
+        granularity='fine',
+        sweep_config=sweep_config,
+        rating_period=config.rating_period,
+        train_end_date=config.train_end_date,
+        test_end_date=config.test_end_date,
+        num_samples=config.num_samples,
+        num_processes=config.num_processes,
+    )
 
 
 if __name__ == '__main__':
